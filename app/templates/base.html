@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth antialiased">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}PlayTimeUY{% endblock %}</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Config personalizado -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 1s ease-out both',
+            'fade-in': 'fadeIn 1.2s ease-in-out both',
+            'pulse-slow': 'pulse 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(40px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+          },
+          colors: {
+            primary: '#ec4899',
+            secondary: '#0f172a',
+            dark: '#0e0e10',
+          },
+        },
+      },
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+
+  <!-- Scrollbar & Selection Custom -->
+  <style>
+    ::selection {
+      background-color: #ec4899;
+      color: white;
+    }
+    body::-webkit-scrollbar {
+      width: 8px;
+    }
+    body::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    body::-webkit-scrollbar-thumb {
+      background-color: #ec4899;
+      border-radius: 10px;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-950 text-white font-sans overflow-x-hidden min-h-screen flex flex-col justify-between relative">
+
+  <!-- VIDEO DE FONDO SOLO EN HOME -->
+  {% if request.endpoint == 'main.index' %}
+  <div class="fixed inset-0 z-0 overflow-hidden">
+    <video autoplay loop muted playsinline class="w-full h-full object-cover brightness-[.4]">
+      <source src="{{ url_for('static', filename='videos/banner.mp4') }}" type="video/mp4">
+      Tu navegador no soporta video HTML5.
+    </video>
+  </div>
+  {% endif %}
+
+  <!-- Navbar -->
+  <header class="relative z-30 animate-fade-in-up">
+    {% include 'navbar.html' %}
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="relative z-20 flex-grow px-4 md:px-10 py-8 animate-fade-in-up">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-20 text-center text-sm text-gray-400 py-6 bg-gray-900/80 backdrop-blur-md border-t border-gray-800 shadow-inner">
+    &copy; {{ current_year or 2025 }} <span class="text-primary font-semibold">PlayTimeUY</span>. Todos los derechos reservados.
+  </footer>
+
+  <!-- JS personalizado -->
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+  <!-- Librerías opcionales -->
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+</body>
+</html>

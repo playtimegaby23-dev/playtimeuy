@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Perfil Creadora - PlayTimeUY{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-8 px-4">
+  <!-- Encabezado -->
+  <div class="mb-6 flex flex-col md:flex-row items-center justify-between">
+    <h1 class="text-3xl font-bold text-primary">Mi Perfil de Creadora</h1>
+    <a href="#" class="bg-primary text-white px-5 py-2 rounded-xl font-medium hover:bg-pink-500 transition">Vista pública</a>
+  </div>
+
+  <!-- Información básica -->
+  <div class="grid md:grid-cols-3 gap-6 mb-10">
+    <div class="bg-gray-900/70 p-6 rounded-2xl shadow-lg col-span-2">
+      <h2 class="text-xl font-semibold mb-4">Información de tu cuenta</h2>
+      <form method="POST" action="{{ url_for('main.guardar_perfil') }}">
+        <div class="grid grid-cols-2 gap-4">
+          <input name="nombre" type="text" placeholder="Nombre completo" class="bg-gray-800 text-white p-3 rounded-lg" />
+          <input name="usuario" type="text" placeholder="Nombre de usuario" class="bg-gray-800 text-white p-3 rounded-lg" />
+          <input name="email" type="email" placeholder="Correo electrónico" class="bg-gray-800 text-white p-3 rounded-lg col-span-2" />
+        </div>
+        <div class="mt-4">
+          <textarea name="bio" placeholder="Biografía (máx. 300 caracteres)" rows="4" class="w-full bg-gray-800 text-white p-3 rounded-lg"></textarea>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button type="submit" class="bg-primary px-5 py-2 rounded-lg hover:bg-pink-500">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Avatar y redes -->
+    <div class="bg-gray-900/70 p-6 rounded-2xl shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">Tu imagen de perfil</h2>
+      <div class="mb-4">
+        <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Avatar" class="w-32 h-32 object-cover rounded-full mx-auto">
+      </div>
+      <input type="file" class="w-full bg-gray-800 text-white p-2 rounded-lg">
+      <div class="mt-6">
+        <h3 class="font-medium mb-2">Redes sociales</h3>
+        <input type="text" placeholder="Instagram" class="w-full mb-2 bg-gray-800 text-white p-2 rounded-lg">
+        <input type="text" placeholder="Twitter" class="w-full bg-gray-800 text-white p-2 rounded-lg">
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuración de ingresos -->
+  <div class="grid md:grid-cols-2 gap-6 mb-10">
+    <!-- Suscripciones -->
+    <div class="bg-gray-900/70 p-6 rounded-2xl shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">Suscripciones</h2>
+      <form method="POST" action="{{ url_for('main.guardar_suscripciones') }}">
+        <div class="grid grid-cols-2 gap-4">
+          <input name="precio_mensual" type="number" placeholder="Precio mensual ($UYU)" class="bg-gray-800 text-white p-3 rounded-lg" />
+          <input name="precio_semanal" type="number" placeholder="Precio semanal ($UYU)" class="bg-gray-800 text-white p-3 rounded-lg" />
+        </div>
+        <div class="mt-4">
+          <textarea name="mensaje_bienvenida" placeholder="Texto de bienvenida para nuevos suscriptores" class="w-full bg-gray-800 text-white p-3 rounded-lg" rows="3"></textarea>
+        </div>
+        <div class="mt-4">
+          <button type="submit" class="bg-primary px-5 py-2 rounded-lg hover:bg-pink-500">Guardar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Sexting -->
+    <div class="bg-gray-900/70 p-6 rounded-2xl shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">Sexting</h2>
+      <form method="POST" action="{{ url_for('main.guardar_sexting') }}">
+        <div class="mb-4">
+          <input name="precio_sexting" type="number" placeholder="Precio por 10 minutos ($UYU)" class="bg-gray-800 text-white p-3 rounded-lg w-full">
+        </div>
+        <div class="mb-4">
+          <input name="disponibilidad" type="time" placeholder="Disponibilidad diaria" class="bg-gray-800 text-white p-3 rounded-lg w-full">
+        </div>
+        <button class="bg-primary px-5 py-2 rounded-lg hover:bg-pink-500">Actualizar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Integración con Telegram -->
+  <div class="bg-gray-900/70 p-6 rounded-2xl shadow-lg mb-10">
+    <h2 class="text-xl font-semibold mb-4">Integrar canal o grupo de Telegram</h2>
+    <form method="POST" action="{{ url_for('main.importar_telegram') }}">
+      <div class="flex flex-col md:flex-row gap-4">
+        <input name="link_telegram" type="text" placeholder="Enlace del grupo/canal" class="bg-gray-800 text-white p-3 rounded-lg w-full">
+        <button class="bg-primary px-5 py-2 rounded-lg hover:bg-pink-500">Importar</button>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">* Asegúrate de ser administradora del grupo para importar contenido.</p>
+    </form>
+  </div>
+
+  <!-- Promociones -->
+  <div class="bg-gray-900/70 p-6 rounded-2xl shadow-lg mb-20">
+    <h2 class="text-xl font-semibold mb-4">Promociones y descuentos</h2>
+    <form method="POST" action="{{ url_for('main.guardar_promocion') }}">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input name="titulo_promo" type="text" placeholder="Título de promoción" class="bg-gray-800 text-white p-3 rounded-lg" />
+        <input name="descuento" type="number" placeholder="Descuento %" class="bg-gray-800 text-white p-3 rounded-lg" />
+        <input name="fecha_validez" type="date" placeholder="Válido hasta" class="bg-gray-800 text-white p-3 rounded-lg" />
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button type="submit" class="bg-primary px-5 py-2 rounded-lg hover:bg-pink-500">Activar promoción</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

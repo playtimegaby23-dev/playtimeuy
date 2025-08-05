@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel del Creador - PlayTimeUY{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-5xl p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
+        <h2 class="text-3xl font-extrabold text-white text-center mb-2 animate-fade-in-down">Panel del Creador</h2>
+        <p class="text-lg text-gray-300 text-center mb-8">Subí, editá y administrá tu contenido exclusivo</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a href="{{ url_for('main.upload_content') }}" class="creator-card">
+                📤 Subir nuevo contenido
+            </a>
+            <a href="{{ url_for('main.my_posts') }}" class="creator-card">
+                🗂️ Ver mis publicaciones
+            </a>
+            <a href="{{ url_for('main.stats') }}" class="creator-card">
+                📈 Estadísticas de vistas y ganancias
+            </a>
+            <a href="{{ url_for('main.messages') }}" class="creator-card">
+                💬 Responder mensajes de fans
+            </a>
+            <a href="{{ url_for('main.profile') }}" class="creator-card">
+                👤 Editar mi perfil
+            </a>
+            <a href="{{ url_for('main.settings') }}" class="creator-card">
+                ⚙️ Configuración
+            </a>
+        </div>
+
+        <div class="text-center mt-10">
+            <a href="{{ url_for('main.logout') }}" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl transition-all duration-300">Cerrar sesión</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .creator-card {
+        @apply flex items-center justify-center text-center bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold text-lg py-6 px-4 rounded-2xl shadow-md hover:bg-white/20 transition duration-300 ease-in-out;
+    }
+
+    @keyframes fade-in-down {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-down {
+        animation: fade-in-down 0.7s ease-out;
+    }
+</style>
+{% endblock %}

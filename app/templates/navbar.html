@@ -1,0 +1,87 @@
+<!-- navbar.html -->
+<nav class="bg-gray-900 shadow-md sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex justify-between items-center h-16">
+
+      <!-- Logo -->
+      <div class="flex-shrink-0">
+        <a href="{{ url_for('main.index') }}" class="text-3xl font-extrabold text-pink-500 tracking-wide hover:text-pink-400 transition duration-300">
+          PlayTimeUY
+        </a>
+      </div>
+
+      <!-- Menú principal -->
+      <div class="hidden md:flex space-x-8 text-gray-300 font-semibold text-lg">
+
+        <a href="{{ url_for('main.index') }}" class="hover:text-pink-400 transition duration-300">
+          Inicio
+        </a>
+
+        <a href="{{ url_for('main.creator_panel') }}" class="hover:text-pink-400 transition duration-300">
+          Creadoras
+        </a>
+
+        <a href="{{ url_for('main.explorar') }}" class="hover:text-pink-400 transition duration-300">
+          Explorar
+        </a>
+
+        <a href="{{ url_for('main.user_panel') }}" class="hover:text-pink-400 transition duration-300">
+          Suscripciones
+        </a>
+
+      </div>
+
+      <!-- Botón cerrar sesión -->
+      <div class="hidden md:flex items-center">
+        <a href="{{ url_for('main.logout') }}" 
+           class="px-4 py-2 bg-pink-600 hover:bg-pink-500 rounded-md text-white font-semibold transition duration-300">
+          Cerrar sesión
+        </a>
+      </div>
+
+      <!-- Menú móvil (hamburguesa) -->
+      <div class="md:hidden flex items-center">
+        <button id="mobile-menu-button" class="text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-400">
+          <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú móvil desplegable -->
+  <div id="mobile-menu" class="hidden md:hidden bg-gray-800">
+    <a href="{{ url_for('main.index') }}" 
+       class="block px-6 py-3 border-b border-gray-700 text-gray-300 hover:bg-pink-600 hover:text-white transition duration-300">
+      Inicio
+    </a>
+    <a href="{{ url_for('main.creator_panel') }}" 
+       class="block px-6 py-3 border-b border-gray-700 text-gray-300 hover:bg-pink-600 hover:text-white transition duration-300">
+      Creadoras
+    </a>
+    <a href="{{ url_for('main.explorar') }}" 
+       class="block px-6 py-3 border-b border-gray-700 text-gray-300 hover:bg-pink-600 hover:text-white transition duration-300">
+      Explorar
+    </a>
+    <a href="{{ url_for('main.user_panel') }}" 
+       class="block px-6 py-3 border-b border-gray-700 text-gray-300 hover:bg-pink-600 hover:text-white transition duration-300">
+      Suscripciones
+    </a>
+    <a href="{{ url_for('main.logout') }}" 
+       class="block px-6 py-3 text-gray-300 hover:bg-pink-600 hover:text-white font-semibold transition duration-300">
+      Cerrar sesión
+    </a>
+  </div>
+
+  <script>
+    // Toggle menú móvil
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  </script>
+</nav>

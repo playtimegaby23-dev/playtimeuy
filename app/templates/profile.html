@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil - PlayTimeUY{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 text-white py-10 px-4 sm:px-8">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-3xl shadow-lg overflow-hidden">
+        <div class="p-8 sm:flex sm:items-start sm:space-x-8">
+            <!-- Foto de perfil -->
+            <div class="flex-shrink-0 mx-auto sm:mx-0">
+                <img class="w-32 h-32 rounded-full border-4 border-pink-500 object-cover"
+                     src="{{ user_data.profile_picture or url_for('static', filename='img/default-avatar.png') }}"
+                     alt="Foto de perfil">
+            </div>
+
+            <!-- Información principal -->
+            <div class="mt-6 sm:mt-0 sm:flex-1">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-bold">{{ user_data.username }}</h2>
+                    <a href="{{ url_for('main.edit_profile') }}"
+                       class="text-sm bg-pink-600 hover:bg-pink-700 px-4 py-2 rounded-lg transition duration-300">
+                        Editar perfil
+                    </a>
+                </div>
+
+                <p class="text-gray-400 mt-2">{{ user_data.bio or "Este usuario aún no ha escrito una bio." }}</p>
+
+                <div class="mt-4 space-y-2">
+                    <p><span class="font-semibold">Correo:</span> {{ user_data.email }}</p>
+                    <p><span class="font-semibold">Rol:</span> {{ user_data.role|capitalize }}</p>
+                    {% if user_data.subscription_plan %}
+                    <p><span class="font-semibold">Plan actual:</span> {{ user_data.subscription_plan }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Redes sociales -->
+                {% if user_data.social_links %}
+                <div class="mt-4 flex space-x-4">
+                    {% for name, link in user_data.social_links.items() %}
+                        <a href="{{ link }}" target="_blank"
+                           class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm capitalize">
+                            {{ name }}
+                        </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Métricas -->
+                <div class="mt-6 flex items-center space-x-6 text-center">
+                    <div>
+                        <p class="text-2xl font-bold">{{ user_data.followers or 0 }}</p>
+                        <p class="text-gray-400 text-sm">Seguidores</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold">{{ user_data.subscribers or 0 }}</p>
+                        <p class="text-gray-400 text-sm">Suscriptores</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold">{{ user_data.tips_received or 0 }}</p>
+                        <p class="text-gray-400 text-sm">Propinas</p>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="mt-8 flex flex-wrap gap-4">
+                    <a href="#" class="bg-pink-500 hover:bg-pink-600 px-5 py-2 rounded-full transition">Seguir</a>
+                    <a href="#" class="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-full transition">Dar propina</a>
+                    <a href="#" class="bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-full transition">Contenido Premium</a>
+                    {% if user_data.role == 'creador' %}
+                    <a href="{{ url_for('main.creator_panel') }}"
+                       class="bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-full transition">
+                        Ir al Panel del Creador
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Administración - PlayTimeUY{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-pink-900 flex items-center justify-center px-6 py-12">
+    <div class="w-full max-w-6xl p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
+        <h2 class="text-4xl font-extrabold text-white text-center mb-4 animate-fade-in-down">Panel de Administración</h2>
+        <p class="text-lg text-gray-300 text-center mb-10">Gestión avanzada de la plataforma</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a href="/admin/usuarios" class="admin-card">👥 Gestión de usuarios</a>
+            <a href="/admin/compras" class="admin-card">💳 Compras realizadas</a>
+            <a href="/admin/publicidad" class="admin-card">📢 Ingresos por publicidad</a>
+            <a href="/admin/notificaciones" class="admin-card">🔔 Notificaciones</a>
+            <a href="/admin/pagos-promotores" class="admin-card">💼 Pagos a promotores</a>
+            <a href="/admin/sorteos" class="admin-card">🎁 Sorteos y concursos</a>
+            <a href="/admin/campañas" class="admin-card">📊 Campañas activas</a>
+            <a href="/admin/perfiles" class="admin-card">👤 Perfiles de usuarios</a>
+            <a href="/admin/suspensiones" class="admin-card">🚫 Suspender cuentas</a>
+            <a href="/admin/mensajes" class="admin-card">💬 Mensajes push</a>
+            <a href="/admin/facturacion" class="admin-card">🧾 Facturación automática</a>
+            <a href="/admin/configuracion" class="admin-card">⚙️ Configuración del sitio</a>
+        </div>
+
+        <div class="text-center mt-10">
+            <a href="{{ url_for('main.logout') }}" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl transition-all duration-300">Cerrar sesión</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .admin-card {
+        @apply flex items-center justify-center text-center bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold text-lg py-6 px-4 rounded-2xl shadow-md hover:bg-white/20 transition duration-300 ease-in-out;
+    }
+
+    @keyframes fade-in-down {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-down {
+        animation: fade-in-down 0.7s ease-out;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Reportar Contenido{% endblock %}
+
+{% block content %}
+<h2>Denunciar contenido inapropiado</h2>
+<form method="POST">
+    <input type="text" name="id_contenido" placeholder="ID del contenido"><br>
+    <textarea name="razon" placeholder="Describe el problema..."></textarea><br>
+    <button type="submit">Enviar Reporte</button>
+</form>
+{% endblock %}
+

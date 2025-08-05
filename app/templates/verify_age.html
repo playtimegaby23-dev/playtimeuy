@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Verificación de Edad{% endblock %}
+
+{% block content %}
+<h2>¿Tienes más de 18 años?</h2>
+<form method="POST">
+    <button type="submit" name="edad" value="si">Sí, soy mayor de edad</button>
+    <button type="submit" name="edad" value="no">No</button>
+</form>
+{% endblock %}
+

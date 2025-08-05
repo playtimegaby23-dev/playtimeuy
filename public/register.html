@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Registro - PlayTimeUY{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-800 to-pink-600 px-4">
+    <div class="bg-white/20 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-white/30 text-white relative">
+        <h2 class="text-3xl font-bold mb-6 text-center">Crear cuenta en <span class="text-pink-200">PlayTimeUY</span></h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-4 space-y-2">
+                    {% for category, message in messages %}
+                        <div class="text-sm px-4 py-2 rounded bg-red-500/80" role="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- FORMULARIO -->
+        <form method="POST" class="grid grid-cols-1 gap-4" onsubmit="return validateForm()">
+            <input type="text" name="full_name" placeholder="Nombre completo" class="input" required>
+            <input type="text" name="username" placeholder="Nombre de usuario" class="input" required>
+            <input type="email" id="email" name="email" placeholder="Correo electrónico" class="input" required>
+            
+            <div class="relative">
+                <input type="password" id="password" name="password" placeholder="Contraseña" class="input pr-10" required>
+                <button type="button" onclick="togglePassword('password')" class="absolute top-2 right-3 text-white/70">👁️</button>
+            </div>
+
+            <div class="relative">
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmar contraseña" class="input pr-10" required>
+                <button type="button" onclick="togglePassword('confirm_password')" class="absolute top-2 right-3 text-white/70">👁️</button>
+            </div>
+
+            <input type="date" name="dob" class="input" required>
+            <input type="text" name="country" placeholder="País" class="input" required>
+            <input type="text" name="twitter" placeholder="Twitter (opcional)" class="input">
+            <input type="text" name="instagram" placeholder="Instagram (opcional)" class="input">
+
+            <select name="role" class="input" required>
+                <option value="">Selecciona tu rol</option>
+                <option value="creator">Creador/a</option>
+                <option value="buyer">Comprador/a</option>
+                <option value="promoter">Promotor/a</option>
+            </select>
+
+            <button type="submit" class="bg-pink-500 hover:bg-pink-600 transition font-semibold py-2 px-4 rounded-xl mt-2">Registrarme</button>
+        </form>
+
+        <!-- Google SignUp -->
+        <div class="mt-6 text-center">
+            <p class="text-sm mb-2">O registrate con:</p>
+            <a href="{{ url_for('main.google_register') }}" class="bg-white text-gray-700 hover:bg-gray-100 transition font-semibold py-2 px-4 rounded-xl inline-flex items-center gap-2">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google" class="w-5 h-5"> Google
+            </a>
+        </div>
+
+        <p class="mt-6 text-center text-sm">¿Ya tenés cuenta? 
+            <a href="{{ url_for('main.login') }}" class="underline text-pink-200 hover:text-white">Iniciar sesión</a>
+        </p>
+    </div>
+</div>
+
+<style>
+.input {
+    @apply w-full p-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-pink-300;
+}
+</style>
+
+<script>
+function togglePassword(id) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function validateForm() {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+    const confirm = document.getElementById("confirm_password").value;
+
+    const emailPattern = /^[^@]+@[^@]+\.[a-zA-Z]{2,}$/;
+
+    if (!emailPattern.test(email)) {
+        alert("Correo electrónico inválido.");
+        return false;
+    }
+
+    if (pass.length < 6) {
+        alert("La contraseña debe tener al menos 6 caracteres.");
+        return false;
+    }
+
+    if (pass !== confirm) {
+        alert("Las contraseñas no coinciden.");
+        return false;
+    }
+
+    return true;
+}
+</script>
+{% endblock %}
