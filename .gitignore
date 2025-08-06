@@ -3,3 +3,6 @@ __pycache__/
 instance/
 .env
 
+app/__init__.py
+secrets/*.json
+app/__init__.py
