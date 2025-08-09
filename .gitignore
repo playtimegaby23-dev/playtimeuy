@@ -8,6 +8,11 @@ node_modules/
 # Archivos del sistema
 __pycache__/
 *.pyc
+*.pyo
 
 # Configuración local
 *.env
+
+# Archivos sensibles
+secrets/
+*.json
