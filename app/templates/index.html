@@ -1,130 +1,154 @@
 {% extends 'base.html' %}
-
 {% block title %}Inicio - PlayTimeUY{% endblock %}
 
 {% block content %}
-<!-- HERO CON VIDEO DE FONDO -->
-<div class="relative h-screen w-full flex items-center justify-center overflow-hidden bg-black text-white">
 
-    <!-- VIDEO FONDO -->
-    <video autoplay loop muted playsinline
-        class="absolute inset-0 w-full h-full object-cover brightness-[0.6] contrast-[1.05] scale-110 z-0">
-        <source src="{{ url_for('static', filename='video/banner.mp4') }}" type="video/mp4">
-        Tu navegador no soporta el video.
-    </video>
-
-    <!-- BACKUP IMG -->
-    <img src="{{ url_for('static', filename='img/banner.jpg') }}"
-        alt="Banner PlayTimeUY"
-        class="absolute inset-0 w-full h-full object-cover brightness-50 hidden z-0" />
-
-    <!-- GLASSMORPHISM LAYER -->
-    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80 backdrop-blur-sm z-10"></div>
-
-    <!-- CONTENIDO CENTRAL -->
-    <div class="relative z-20 text-center max-w-3xl px-6 animate-fade-in-up">
-        <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-wide text-shadow-xl animate-slide-in-down">
-            Bienvenid@ a <span class="text-pink-500">PlayTimeUY</span>
-        </h1>
-
-        <p class="text-lg md:text-2xl mb-10 text-gray-200 font-light animate-fade-in-up delay-100">
-            La plataforma donde las <span class="font-semibold text-white">creadoras uruguayas</span>
-            se quedan con el <span class="font-bold text-pink-400">100%</span> de sus ganancias.
-            <br class="hidden sm:block"> ¡Tomá el control de tu contenido!
-        </p>
-
-        <!-- BOTONES -->
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 animate-fade-in-up delay-200">
-            <a href="{{ url_for('main.login') }}"
-                class="px-8 py-3 w-44 text-lg bg-gradient-to-r from-pink-500 to-pink-700 hover:from-pink-600 hover:to-pink-800 text-white rounded-full font-semibold shadow-xl transform transition-all duration-300 hover:scale-105">
-                Ingresar
-            </a>
-            <a href="{{ url_for('main.register') }}"
-                class="px-8 py-3 w-44 text-lg border-2 border-white text-white hover:bg-white hover:text-black rounded-full font-semibold shadow-xl transform transition-all duration-300 hover:scale-105">
-                Registrarse
-            </a>
-            <button onclick="signInWithGoogle()"
-                class="px-8 py-3 w-44 text-lg flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 rounded-full font-semibold shadow-xl transform transition-all duration-300 hover:scale-105">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="w-5 h-5">
-                Google
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ESTILOS EXTRA -->
 <style>
-    @keyframes fade-in-up {
-        0% { opacity: 0; transform: translateY(30px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
+  :root {
+    --header-height: 72px;
+  }
+  @media (max-width: 640px) {
+    :root { --header-height: 64px; }
+  }
 
-    @keyframes slide-in-down {
-        0% { opacity: 0; transform: translateY(-50px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
+  /* Header fijo */
+  .pt-header { padding-top: var(--header-height); }
 
-    .animate-fade-in-up {
-        animation: fade-in-up 1.3s ease-out both;
-    }
+  /* Video */
+  .bg-video {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    width: 100%;
+    height: calc(100vh - var(--header-height));
+    object-fit: cover;
+    z-index: -20;
+  }
 
-    .animate-slide-in-down {
-        animation: slide-in-down 1.3s ease-out both;
-    }
+  /* Animaciones */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up { animation: fade-in-up 0.9s ease-out both; }
 
-    .delay-100 { animation-delay: 0.1s; }
-    .delay-200 { animation-delay: 0.2s; }
-
-    .text-shadow-xl {
-        text-shadow: 0 6px 14px rgba(0, 0, 0, 0.85);
-    }
-
-    @media (max-width: 640px) {
-        h1 {
-            font-size: 2.5rem;
-        }
-
-        p {
-            font-size: 1rem;
-        }
-    }
+  @keyframes gradient-move {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-move 8s ease infinite;
+  }
 </style>
 
-<!-- SCRIPTS -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID",
-    measurementId: "YOUR_MEASUREMENT_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
+<!-- HEADER -->
+<header class="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/10">
+  <div class="max-w-7xl mx-auto h-[var(--header-height)] flex items-center justify-between px-4 sm:px-8">
+    
+    <!-- LOGO -->
+    <a href="{{ url_for('index') }}" class="flex items-center gap-3" aria-label="PlayTimeUY - Inicio">
+      <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-600">
+        PT
+      </div>
+      <div class="flex flex-col leading-tight">
+        <span class="text-white font-extrabold text-lg md:text-xl">PlayTimeUY</span>
+        <span class="text-white/70 text-xs md:text-sm italic hidden sm:inline">
+          La libertad de crear, la fuerza de ganar
+        </span>
+      </div>
+    </a>
 
-  function signInWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider)
-      .then((result) => {
-        return result.user.getIdToken();
-      })
-      .then((idToken) => {
-        fetch("/login/google", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ id_token: idToken })
-        })
-        .then(response => window.location.href = "/dashboard")
-        .catch(error => console.error("Error al enviar token al servidor:", error));
-      })
-      .catch((error) => {
-        console.error("Error de autenticación con Google:", error);
-      });
-  }
+    <!-- NAV -->
+    <nav class="flex items-center gap-3">
+      <a href="{{ url_for('login') }}" 
+         class="px-4 md:px-5 py-2 rounded-full text-sm md:text-base font-semibold 
+                bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 
+                text-white shadow-md hover:scale-105 transition-transform">
+        Ingresar
+      </a>
+      <a href="{{ url_for('register') }}" 
+         class="px-4 md:px-5 py-2 rounded-full text-sm md:text-base font-semibold 
+                border border-pink-400 text-white hover:bg-pink-500/20 
+                transition-colors">
+        Registrarse
+      </a>
+      <button id="nav-toggle" class="ml-2 md:hidden text-white/90 focus:outline-none" aria-label="Abrir menú">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<!-- VIDEO -->
+<video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+  <source src="{{ url_for('static', filename='video/banner.mp4') }}" type="video/mp4">
+  Tu navegador no soporta video.
+</video>
+
+<!-- HERO -->
+<section id="hero" class="pt-header relative w-full min-h-[calc(100vh-var(--header-height))] flex items-center justify-center text-center text-white">
+  <div class="absolute top-[var(--header-height)] left-0 w-full h-[calc(100vh-var(--header-height))] bg-black/45 -z-10"></div>
+
+  <div class="relative z-10 max-w-4xl px-6 animate-fade-in-up">
+    <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+      Bienvenid@ a
+      <span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-300 via-fuchsia-400 to-purple-500 animate-gradient">
+        PlayTimeUY
+      </span>
+    </h1>
+
+    <p class="text-lg md:text-2xl text-gray-200 font-light mb-10 max-w-xl mx-auto">
+      La plataforma donde las <span class="font-semibold text-white">creadoras uruguayas</span> se quedan con el <span class="font-bold text-pink-300">100%</span> de sus ganancias.
+      <br class="hidden md:block">
+      <span class="italic">¡Tomá el control de tu contenido como nunca antes!</span>
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-6 justify-center">
+      <a href="{{ url_for('login') }}" 
+         class="w-44 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 transition-transform">
+        Ingresar
+      </a>
+      <a href="{{ url_for('register') }}" 
+         class="w-44 px-6 py-3 rounded-full border-2 border-pink-400 text-white hover:bg-pink-500/20 transition">
+        Registrarse
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFICIOS -->
+<section class="bg-black py-20 text-gray-300">
+  <div class="max-w-6xl mx-auto px-6">
+    <h2 class="text-3xl md:text-4xl font-bold text-white mb-8">
+      ¿Por qué elegir <span class="text-pink-400">PlayTimeUY</span>?
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-[1.02] transition-transform">
+        <h3 class="text-xl font-semibold text-pink-400 mb-2">💰 100% Ganancias</h3>
+        <p>Todo lo que generes es tuyo, sin comisiones ocultas.</p>
+      </article>
+      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-[1.02] transition-transform">
+        <h3 class="text-xl font-semibold text-pink-400 mb-2">🔒 Seguridad</h3>
+        <p>Protegemos tu contenido y privacidad con tecnología avanzada.</p>
+      </article>
+      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-[1.02] transition-transform">
+        <h3 class="text-xl font-semibold text-pink-400 mb-2">⚡ Rápido y Fácil</h3>
+        <p>Empezá a publicar y monetizar en minutos.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- SCRIPT -->
+<script>
+  document.getElementById('nav-toggle')?.addEventListener('click', () => {
+    alert('Abrir menú móvil: aquí podrías integrar un menú desplegable.');
+  });
 </script>
+
 {% endblock %}

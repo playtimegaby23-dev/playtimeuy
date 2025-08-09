@@ -1,106 +1,129 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth antialiased">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="PlayTimeUY - Plataforma para creadoras uruguayas, controla y monetiza tu contenido." />
+  <meta name="author" content="PlayTimeUY" />
   <title>{% block title %}PlayTimeUY{% endblock %}</title>
 
-  <!-- Tailwind CSS -->
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <!-- TailwindCSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Tailwind Config personalizado -->
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Poppins', 'sans-serif'],
-          },
-          animation: {
-            'fade-in-up': 'fadeInUp 1s ease-out both',
-            'fade-in': 'fadeIn 1.2s ease-in-out both',
-            'pulse-slow': 'pulse 3s ease-in-out infinite',
-          },
-          keyframes: {
-            fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(40px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            },
-          },
-          colors: {
-            primary: '#ec4899',
-            secondary: '#0f172a',
-            dark: '#0e0e10',
-          },
-        },
-      },
-    }
-  </script>
+  <!-- CSS propio -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet" />
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
-
-  <!-- Scrollbar & Selection Custom -->
-  <style>
-    ::selection {
-      background-color: #ec4899;
-      color: white;
-    }
-    body::-webkit-scrollbar {
-      width: 8px;
-    }
-    body::-webkit-scrollbar-track {
-      background: #0f172a;
-    }
-    body::-webkit-scrollbar-thumb {
-      background-color: #ec4899;
-      border-radius: 10px;
-    }
-    html {
-      scroll-behavior: smooth;
-    }
-  </style>
+  {% block extra_head %}{% endblock %}
 </head>
-
-<body class="bg-gray-950 text-white font-sans overflow-x-hidden min-h-screen flex flex-col justify-between relative">
-
-  <!-- VIDEO DE FONDO SOLO EN HOME -->
-  {% if request.endpoint == 'main.index' %}
-  <div class="fixed inset-0 z-0 overflow-hidden">
-    <video autoplay loop muted playsinline class="w-full h-full object-cover brightness-[.4]">
-      <source src="{{ url_for('static', filename='videos/banner.mp4') }}" type="video/mp4">
-      Tu navegador no soporta video HTML5.
-    </video>
-  </div>
-  {% endif %}
+<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 
   <!-- Navbar -->
-  <header class="relative z-30 animate-fade-in-up">
-    {% include 'navbar.html' %}
-  </header>
+  <nav class="bg-gray-800 shadow-md">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="{{ url_for('index') }}" class="text-2xl font-extrabold tracking-tight hover:text-pink-500 transition">
+        PlayTime<span class="text-pink-500">UY</span>
+      </a>
+
+      <ul class="hidden md:flex space-x-6 font-semibold text-gray-300">
+        <li><a href="{{ url_for('index') }}" class="hover:text-white transition">Inicio</a></li>
+        <!-- Cambia 'dashboard' a 'explorar' si tienes esa ruta en Flask -->
+        <li><a href="{{ url_for('dashboard') }}" class="hover:text-white transition">Explorar</a></li>
+        {% if 'user' in session %}
+          <li><a href="{{ url_for('dashboard') }}" class="hover:text-white transition">Dashboard</a></li>
+          <li><a href="{{ url_for('logout') }}" class="hover:text-pink-500 transition">Cerrar sesión</a></li>
+        {% else %}
+          <li><a href="{{ url_for('login') }}" class="hover:text-white transition">Ingresar</a></li>
+          <li><a href="{{ url_for('register') }}" class="hover:text-white transition">Registrarse</a></li>
+        {% endif %}
+      </ul>
+
+      <!-- Mobile menu button -->
+      <button id="btn-mobile-menu" class="md:hidden focus:outline-none" aria-label="Toggle menu" aria-expanded="false">
+        <svg class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+          <path d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile menu, hidden by default -->
+    <div id="mobile-menu" class="hidden md:hidden bg-gray-800 px-4 py-4">
+      <ul class="space-y-3 font-semibold text-gray-300">
+        <li><a href="{{ url_for('index') }}" class="block hover:text-white transition">Inicio</a></li>
+        <!-- Igual aquí -->
+        <li><a href="{{ url_for('dashboard') }}" class="block hover:text-white transition">Explorar</a></li>
+        {% if 'user' in session %}
+          <li><a href="{{ url_for('dashboard') }}" class="block hover:text-white transition">Dashboard</a></li>
+          <li><a href="{{ url_for('logout') }}" class="block hover:text-pink-500 transition">Cerrar sesión</a></li>
+        {% else %}
+          <li><a href="{{ url_for('login') }}" class="block hover:text-white transition">Ingresar</a></li>
+          <li><a href="{{ url_for('register') }}" class="block hover:text-white transition">Registrarse</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  <div class="container mx-auto px-4 mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="max-w-xl mx-auto">
+          {% for category, message in messages %}
+            <div class="mb-3 rounded border px-4 py-3 text-sm
+              {% if category == 'success' %}bg-green-700 text-green-100 border-green-600
+              {% elif category == 'danger' %}bg-red-700 text-red-100 border-red-600
+              {% elif category == 'warning' %}bg-yellow-700 text-yellow-100 border-yellow-600
+              {% else %}bg-gray-700 text-gray-100 border-gray-600
+              {% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
 
   <!-- Contenido principal -->
-  <main class="relative z-20 flex-grow px-4 md:px-10 py-8 animate-fade-in-up">
+  <main class="flex-grow">
+    {% block banner %}
+      <!-- Ejemplo para banner video fijo -->
+      <!-- Solo colocar en la plantilla que use banner -->
+      {# 
+      <div class="relative w-full h-64 md:h-96 overflow-hidden">
+        <video autoplay muted loop playsinline class="absolute top-0 left-0 w-full h-full object-cover">
+          <source src="{{ url_for('static', filename='video/banner.mp4') }}" type="video/mp4" />
+          Tu navegador no soporta video HTML5.
+        </video>
+        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <h1 class="text-4xl md:text-6xl font-bold text-white">Bienvenida a PlayTimeUY</h1>
+        </div>
+      </div>
+      #}
+    {% endblock %}
     {% block content %}{% endblock %}
   </main>
 
   <!-- Footer -->
-  <footer class="relative z-20 text-center text-sm text-gray-400 py-6 bg-gray-900/80 backdrop-blur-md border-t border-gray-800 shadow-inner">
-    &copy; {{ current_year or 2025 }} <span class="text-primary font-semibold">PlayTimeUY</span>. Todos los derechos reservados.
+  <footer class="bg-gray-800 text-gray-400 text-center py-6 mt-10">
+    <p>&copy; 2025 PlayTimeUY. Todos los derechos reservados.</p>
   </footer>
 
-  <!-- JS personalizado -->
-  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  <!-- Scripts -->
+  <script>
+    // Script para toggle menú móvil
+    const btnMobileMenu = document.getElementById('btn-mobile-menu');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-  <!-- Librerías opcionales -->
-  <script src="https://unpkg.com/@popperjs/core@2"></script>
-  <script src="https://unpkg.com/alpinejs" defer></script>
+    btnMobileMenu.addEventListener('click', () => {
+      const expanded = btnMobileMenu.getAttribute('aria-expanded') === 'true' || false;
+      btnMobileMenu.setAttribute('aria-expanded', !expanded);
+      mobileMenu.classList.toggle('hidden');
+    });
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

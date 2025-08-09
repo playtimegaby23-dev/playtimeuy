@@ -8,15 +8,16 @@ from firebase_admin import credentials
 
 main = Blueprint('main', __name__)
 
-# Firebase Admin SDK
-cred = credentials.Certificate(os.path.join(os.getcwd(), 'secrets', 'playtimeuy-firebase-adminsdk-fbsvc-0052daa66e.json'))
+# Inicializar Firebase Admin SDK
+cred_path = os.path.join(os.getcwd(), 'secrets', 'playtimeuy-firebase-adminsdk-fbsvc-0052daa66e.json')
 if not firebase_admin._apps:
+    cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-# Pyrebase config
+# Configuración de Pyrebase (autenticación)
 firebase_config = {
-    "apiKey": "AIzaSyC3fB1L-ZYElshW9v9aPVtOr94T2YSHszU",
+    "apiKey": os.getenv("FIREBASE_API_KEY", "AIzaSyC3fB1L-ZYElshW9v9aPVtOr94T2YSHszU"),
     "authDomain": "playtimeuy.firebaseapp.com",
     "projectId": "playtimeuy",
     "storageBucket": "playtimeuy.appspot.com",
@@ -28,21 +29,19 @@ firebase_config = {
 
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
-storage = firebase.storage()
 
-# Home
+# ------------------ RUTAS PRINCIPALES ------------------
+
 @main.route('/')
 def index():
     return render_template('index.html')
 
-# Página de exploración de creadores
 @main.route('/explorar')
 def explorar():
     usuarios = db.collection('usuarios').stream()
-    lista = [user.to_dict() for user in usuarios if user.to_dict().get('tipo') == 'creador']
+    lista = [u.to_dict() for u in usuarios if u.to_dict().get('tipo') == 'creador']
     return render_template('explorar.html', creadores=lista)
 
-# Página de perfil público del creador
 @main.route('/perfil/<string:user_id>')
 def perfil_creador(user_id):
     user_doc = db.collection('usuarios').document(user_id).get()
@@ -53,7 +52,8 @@ def perfil_creador(user_id):
         flash('Creador no encontrado.', 'error')
         return redirect(url_for('main.explorar'))
 
-# Registro de usuario
+# ------------------ REGISTRO ------------------
+
 @main.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -63,28 +63,43 @@ def register():
         tipo = request.form['tipo']  # creador, comprador, promotor
 
         try:
+            # Crear usuario en Firebase Authentication
             user = auth.create_user_with_email_and_password(email, password)
+
+            # Enviar verificación por correo
             auth.send_email_verification(user['idToken'])
+
+            # Guardar datos del usuario en Firestore
             user_id = user['localId']
             user_data = {
                 'nombre': nombre,
                 'email': email,
                 'tipo': tipo,
-                'fecha_registro': datetime.now(),
+                'fecha_registro': datetime.now().isoformat(),
                 'verificado': False,
                 'foto': '',
                 'bio': '',
                 'redes': {}
             }
             db.collection('usuarios').document(user_id).set(user_data)
-            flash('Registro exitoso. Verifica tu email antes de iniciar sesión.', 'success')
+
+            flash('Registro exitoso. Verificá tu correo antes de iniciar sesión.', 'success')
             return redirect(url_for('main.login'))
+
         except Exception as e:
-            flash(f'Error: {str(e)}', 'error')
+            error_msg = str(e)
+            if "EMAIL_EXISTS" in error_msg:
+                flash("El correo ya está registrado.", "error")
+            elif "WEAK_PASSWORD" in error_msg:
+                flash("La contraseña es muy débil.", "error")
+            else:
+                flash(f"Error al registrar: {error_msg}", "error")
             return redirect(url_for('main.register'))
+
     return render_template('auth/register.html')
 
-# Inicio de sesión
+# ------------------ LOGIN ------------------
+
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -109,7 +124,7 @@ def login():
                 session['email'] = email
                 session['tipo'] = user_data['tipo']
 
-                if email == 'playtimegaby23@gmail.com':
+                if email == os.getenv("ADMIN_EMAIL", "playtimegaby23@gmail.com"):
                     return redirect(url_for('main.admin_dashboard'))
                 elif user_data['tipo'] == 'creador':
                     return redirect(url_for('main.dashboard_creador'))
@@ -117,15 +132,18 @@ def login():
                     return redirect(url_for('main.dashboard_comprador'))
                 elif user_data['tipo'] == 'promotor':
                     return redirect(url_for('main.dashboard_promotor'))
-                else:
-                    return redirect(url_for('main.index'))
-        except Exception as e:
+
+            flash('Usuario no encontrado en base de datos.', 'error')
+            return redirect(url_for('main.login'))
+
+        except Exception:
             flash('Credenciales inválidas o error de autenticación.', 'error')
             return redirect(url_for('main.login'))
 
     return render_template('auth/login.html')
 
-# Dashboards
+# ------------------ DASHBOARDS ------------------
+
 @main.route('/dashboard/creador')
 def dashboard_creador():
     if session.get('tipo') != 'creador':
@@ -144,21 +162,24 @@ def dashboard_promotor():
         return redirect(url_for('main.login'))
     return render_template('dashboards/promotor.html')
 
-# Panel del administrador
+# ------------------ ADMIN ------------------
+
 @main.route('/admin')
 def admin_dashboard():
-    if session.get('email') != 'playtimegaby23@gmail.com':
+    if session.get('email') != os.getenv("ADMIN_EMAIL", "playtimegaby23@gmail.com"):
         return redirect(url_for('main.login'))
     return render_template('admin/dashboard.html')
 
-# Cerrar sesión
+# ------------------ LOGOUT ------------------
+
 @main.route('/logout')
 def logout():
     session.clear()
     flash('Sesión cerrada correctamente.', 'info')
     return redirect(url_for('main.index'))
 
-# Página de error 404
+# ------------------ ERROR 404 ------------------
+
 @main.app_errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404

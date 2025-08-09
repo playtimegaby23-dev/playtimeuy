@@ -1,8 +1,13 @@
+# Entornos virtuales
+venv/
+env/
+
+# Node.js
+node_modules/
+
+# Archivos del sistema
 __pycache__/
 *.pyc
-instance/
-.env
 
-app/__init__.py
-secrets/*.json
-app/__init__.py
+# Configuración local
+*.env
