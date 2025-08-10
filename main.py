@@ -1,35 +1,37 @@
 import os
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from dotenv import load_dotenv
 from firebase_admin import credentials, firestore, initialize_app
-import pyrebase
-from datetime import datetime
 import firebase_admin
+import pyrebase
 
-# 🌐 Cargar variables de entorno desde .env
+# 🌐 Cargar variables de entorno (.env para desarrollo, Render usa variables propias)
 load_dotenv()
 
-# 🚀 Inicializar Flask app
+# 🚀 Inicializar Flask
 app = Flask(
     __name__,
     static_folder=os.path.join('app', 'static'),
     template_folder=os.path.join('app', 'templates')
 )
-app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
+app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 
-# 🔐 Inicializar Firebase Admin SDK (para Firestore)
+# 🔐 Configuración Firebase Admin SDK (Firestore)
 cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 if not cred_path or not os.path.isfile(cred_path):
-    raise FileNotFoundError("Credenciales de Firebase Admin no encontradas.")
+    raise FileNotFoundError(
+        "Archivo de credenciales de Firebase Admin no encontrado. "
+        "Asegúrate de subirlo a Render o configurar GOOGLE_APPLICATION_CREDENTIALS."
+    )
 
 if not firebase_admin._apps:
     cred = credentials.Certificate(cred_path)
     initialize_app(cred)
 
-# ☁️ Firestore (solo con Firebase Admin SDK)
 db = firestore.client()
 
-# 🔧 Pyrebase (para Auth)
+# 🔧 Pyrebase para Auth
 firebase_config = {
     "apiKey": os.getenv("FIREBASE_API_KEY"),
     "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
@@ -37,12 +39,13 @@ firebase_config = {
     "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
     "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
     "appId": os.getenv("FIREBASE_APP_ID"),
-    "databaseURL": ""  # No se usa Realtime DB
+    "databaseURL": ""  # No usamos Realtime Database
 }
+
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 
-# 🏠 Página principal (con video de fondo)
+# 🏠 Página principal
 @app.route('/')
 def index():
     return render_template('index.html', current_year=datetime.utcnow().year, show_video=True)
@@ -59,10 +62,15 @@ def register():
         password = request.form.get('password')
         tipo_cuenta = request.form.get('tipo_cuenta')
 
+        if not all([nombre, email, password, tipo_cuenta]):
+            flash("Todos los campos son obligatorios.", "danger")
+            return redirect(url_for('register'))
+
         try:
             user = auth.create_user_with_email_and_password(email, password)
             auth.send_email_verification(user['idToken'])
             user_id = user['localId']
+
             db.collection('usuarios').document(user_id).set({
                 "nombre": nombre,
                 "email": email,
@@ -70,8 +78,10 @@ def register():
                 "fecha_registro": datetime.utcnow(),
                 "verificado": False
             })
-            flash("Registro exitoso. Verifica tu correo electrónico antes de iniciar sesión.", "success")
+
+            flash("Registro exitoso. Verifica tu correo antes de iniciar sesión.", "success")
             return redirect(url_for('login'))
+
         except Exception as e:
             error_msg = str(e)
             if "EMAIL_EXISTS" in error_msg:
@@ -104,12 +114,13 @@ def login():
             session['user'] = email
             flash("Sesión iniciada correctamente.", "success")
             return redirect(url_for('dashboard'))
+
         except Exception:
             flash("Credenciales incorrectas o error al iniciar sesión.", "danger")
 
     return render_template('login.html', show_video=False)
 
-# 📊 Dashboard (panel privado)
+# 📊 Dashboard
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
@@ -125,12 +136,12 @@ def logout():
     flash("Sesión cerrada exitosamente.", "info")
     return redirect(url_for('login'))
 
-# ❌ Página 404 personalizada
+# ❌ Página 404
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
 
-# ▶️ Ejecutar servidor
+# ▶️ Ejecución (Render usa Gunicorn en producción)
 if __name__ == '__main__':
     app.run(
         host="0.0.0.0",
