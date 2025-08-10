@@ -1,28 +1,28 @@
-# render.yaml
 services:
   - type: web
     name: playtimeuy
     env: python
-    buildCommand: pip install -r requirements.txt
+    pythonVersion: 3.11  # Para evitar problemas con Python 3.13 y Pillow
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
     startCommand: gunicorn app:app
-    plan: free
-    autoDeploy: true
     envVars:
+      - key: FLASK_SECRET_KEY
+        sync: false
       - key: GOOGLE_APPLICATION_CREDENTIALS
-        value: /opt/render/project/src/secrets/playtimeuy-firebase-adminsdk.json
+        sync: false
       - key: FIREBASE_API_KEY
         sync: false
       - key: FIREBASE_AUTH_DOMAIN
-        value: playtimeuy.firebaseapp.com
+        sync: false
       - key: FIREBASE_PROJECT_ID
-        value: playtimeuy
+        sync: false
       - key: FIREBASE_STORAGE_BUCKET
-        value: playtimeuy.appspot.com
-      - key: FIREBASE_DATABASE_URL
-        value: ""
+        sync: false
       - key: FIREBASE_MESSAGING_SENDER_ID
         sync: false
       - key: FIREBASE_APP_ID
         sync: false
-      - key: FIREBASE_MEASUREMENT_ID
+      - key: PORT
         sync: false
