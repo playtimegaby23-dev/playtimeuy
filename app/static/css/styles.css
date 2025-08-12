@@ -1,8 +1,14 @@
-/* Reset básico */
-* {
+/* 🎯 Reset básico y normalización */
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
@@ -10,19 +16,26 @@ body {
     background-color: #f8f8f8;
     color: #222;
     line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
-/* Enlaces */
+/* Links */
 a {
     text-decoration: none;
     color: inherit;
+    transition: color 0.3s ease;
 }
 
 /* Navegación */
 nav {
-    background-color: #fff;
-    border-bottom: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 1rem 2rem;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 nav ul {
@@ -34,9 +47,8 @@ nav ul {
 }
 
 nav a {
-    font-weight: bold;
+    font-weight: 600;
     color: #333;
-    transition: color 0.3s;
 }
 
 nav a:hover {
@@ -49,14 +61,26 @@ nav a:hover {
     width: 100%;
     height: 600px;
     overflow: hidden;
-    background-color: #000;
+    background: #000;
 }
 
-.banner-img {
+/* Video de fondo */
+#bg-video {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     filter: brightness(0.6);
+    z-index: -2;
+}
+
+/* Imagen de fondo (fallback) */
+#bg-image {
+    position: absolute;
+    inset: 0;
+    background: url("../img/banner.png") no-repeat center center / cover;
+    z-index: -3;
 }
 
 /* Botones sobre banner */
@@ -71,81 +95,66 @@ nav a:hover {
 
 .btn {
     background-color: #ff4081;
-    color: white;
+    color: #fff;
     padding: 0.75rem 1.5rem;
     border: none;
-    text-decoration: none;
-    font-weight: bold;
+    font-weight: 600;
     border-radius: 8px;
     font-size: 1rem;
+    cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .btn:hover {
     background-color: #e73370;
-    transform: scale(1.05);
+    transform: translateY(-2px);
 }
 
+/* Botón transparente */
 .btn-outline {
-    background: transparent;
-    border: 2px solid #fff;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.6);
     color: #fff;
+    backdrop-filter: blur(4px);
 }
 
 .btn-outline:hover {
-    background-color: #fff;
+    background-color: rgba(255,255,255,0.9);
     color: #111;
-    border-color: #fff;
 }
 
-/* Responsive para móviles */
-@media screen and (max-width: 768px) {
+/* Oscurecer para destacar texto */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .banner-container {
+        height: 400px;
+    }
+
     .banner-buttons {
         flex-direction: column;
         bottom: 20px;
         right: 20px;
+        width: calc(100% - 40px);
     }
 
     .btn {
         width: 100%;
-        text-align: center;
+        font-size: 1.1rem;
     }
 
     nav ul {
         justify-content: center;
         flex-wrap: wrap;
+        gap: 1rem;
     }
-}
-/* VIDEO de fondo */
-#bg-video {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    min-width: 100%;
-    min-height: 100%;
-    z-index: -2;
-    object-fit: cover;
-}
-
-/* Imagen de fondo fallback */
-#bg-image {
-    background: url("../img/banner.png") no-repeat center center/cover;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -3;
-}
-
-/* Oscurecer un poco para que el texto destaque */
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: -1;
 }

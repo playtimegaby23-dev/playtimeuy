@@ -2,120 +2,76 @@
 {% block title %}Inicio - PlayTimeUY{% endblock %}
 
 {% block content %}
-
-<style>
-  :root {
-    --header-height: 72px;
-  }
-  @media (max-width: 640px) {
-    :root { --header-height: 64px; }
-  }
-
-  /* Header fijo */
-  .pt-header { padding-top: var(--header-height); }
-
-  /* Video */
-  .bg-video {
-    position: fixed;
-    top: var(--header-height);
-    left: 0;
-    width: 100%;
-    height: calc(100vh - var(--header-height));
-    object-fit: cover;
-    z-index: -20;
-  }
-
-  /* Animaciones */
-  @keyframes fade-in-up {
-    from { opacity: 0; transform: translateY(18px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fade-in-up { animation: fade-in-up 0.9s ease-out both; }
-
-  @keyframes gradient-move {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient-move 8s ease infinite;
-  }
-</style>
-
-<!-- HEADER -->
-<header class="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/10">
-  <div class="max-w-7xl mx-auto h-[var(--header-height)] flex items-center justify-between px-4 sm:px-8">
-    
+<!-- NAVBAR -->
+<header id="navbar" class="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10 transition-all duration-300 shadow-lg">
+  <div class="max-w-7xl mx-auto h-16 md:h-20 flex items-center justify-between px-4 sm:px-8">
     <!-- LOGO -->
-    <a href="{{ url_for('index') }}" class="flex items-center gap-3" aria-label="PlayTimeUY - Inicio">
-      <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-600">
+    <a href="{{ url_for('main.index') }}" class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-600 select-none">
         PT
       </div>
       <div class="flex flex-col leading-tight">
-        <span class="text-white font-extrabold text-lg md:text-xl">PlayTimeUY</span>
-        <span class="text-white/70 text-xs md:text-sm italic hidden sm:inline">
+        <span class="text-white font-extrabold text-lg md:text-xl select-none">PlayTimeUY</span>
+        <span class="text-white/70 text-xs md:text-sm italic hidden sm:inline select-none">
           La libertad de crear, la fuerza de ganar
         </span>
       </div>
     </a>
-
     <!-- NAV -->
-    <nav class="flex items-center gap-3">
-      <a href="{{ url_for('login') }}" 
-         class="px-4 md:px-5 py-2 rounded-full text-sm md:text-base font-semibold 
-                bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 
-                text-white shadow-md hover:scale-105 transition-transform">
+    <nav class="hidden md:flex items-center gap-4">
+      <a href="{{ url_for('main.login') }}" class="px-6 py-2 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-600 text-white font-semibold shadow-lg hover:shadow-pink-500/50 hover:scale-105 transition duration-300">
         Ingresar
       </a>
-      <a href="{{ url_for('register') }}" 
-         class="px-4 md:px-5 py-2 rounded-full text-sm md:text-base font-semibold 
-                border border-pink-400 text-white hover:bg-pink-500/20 
-                transition-colors">
+      <a href="{{ url_for('main.register') }}" class="px-6 py-2 rounded-full border border-pink-400 text-white hover:bg-pink-500/20 transition duration-300">
         Registrarse
       </a>
-      <button id="nav-toggle" class="ml-2 md:hidden text-white/90 focus:outline-none" aria-label="Abrir menú">
-        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
     </nav>
+    <!-- MENU MOBILE -->
+    <button id="nav-toggle" class="md:hidden text-white focus:outline-none" aria-label="Abrir menú móvil" aria-expanded="false">
+      <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </div>
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden flex-col bg-black/90 px-6 py-4 space-y-4 md:hidden">
+    <a href="{{ url_for('main.login') }}" class="block px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white text-center font-semibold">
+      Ingresar
+    </a>
+    <a href="{{ url_for('main.register') }}" class="block px-4 py-2 rounded-full border border-pink-400 text-white text-center font-semibold hover:bg-pink-500/20 transition">
+      Registrarse
+    </a>
   </div>
 </header>
 
-<!-- VIDEO -->
-<video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
-  <source src="{{ url_for('static', filename='video/banner.mp4') }}" type="video/mp4">
-  Tu navegador no soporta video.
-</video>
-
 <!-- HERO -->
-<section id="hero" class="pt-header relative w-full min-h-[calc(100vh-var(--header-height))] flex items-center justify-center text-center text-white">
-  <div class="absolute top-[var(--header-height)] left-0 w-full h-[calc(100vh-var(--header-height))] bg-black/45 -z-10"></div>
-
-  <div class="relative z-10 max-w-4xl px-6 animate-fade-in-up">
-    <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-      Bienvenid@ a
+<section class="relative flex items-center justify-center min-h-screen text-center text-white pt-32 overflow-hidden">
+  <!-- VIDEO BACKGROUND -->
+  <video class="absolute inset-0 w-full h-full object-cover -z-20" autoplay muted loop playsinline>
+    <source src="{{ url_for('static', filename='video/banner.mp4') }}" type="video/mp4">
+    Tu navegador no soporta video HTML5.
+  </video>
+  <!-- OVERLAY -->
+  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90 -z-10"></div>
+  <!-- CONTENT -->
+  <div class="max-w-4xl px-4 animate-fade-in-up">
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight select-none">
+      Bienvenid@ a 
       <span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-300 via-fuchsia-400 to-purple-500 animate-gradient">
         PlayTimeUY
       </span>
     </h1>
-
-    <p class="text-lg md:text-2xl text-gray-200 font-light mb-10 max-w-xl mx-auto">
-      La plataforma donde las <span class="font-semibold text-white">creadoras uruguayas</span> se quedan con el <span class="font-bold text-pink-300">100%</span> de sus ganancias.
-      <br class="hidden md:block">
-      <span class="italic">¡Tomá el control de tu contenido como nunca antes!</span>
+    <p class="text-lg md:text-2xl text-gray-200 font-light mb-8">
+      La plataforma donde las <span class="font-semibold text-white">creadoras uruguayas</span> 
+      se quedan con el <span class="font-bold text-pink-300">100%</span> de sus ganancias.
     </p>
-
-    <div class="flex flex-col sm:flex-row gap-6 justify-center">
-      <a href="{{ url_for('login') }}" 
-         class="w-44 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 transition-transform">
-        Ingresar
+    <div class="flex justify-center gap-4">
+      <a href="{{ url_for('main.register') }}" class="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 transition duration-300">
+        ¡Comenzar Ahora!
       </a>
-      <a href="{{ url_for('register') }}" 
-         class="w-44 px-6 py-3 rounded-full border-2 border-pink-400 text-white hover:bg-pink-500/20 transition">
-        Registrarse
+      <a href="{{ url_for('main.login') }}" class="px-8 py-3 rounded-full border border-pink-400 text-white hover:bg-pink-500/20 transition duration-300">
+        Ingresar
       </a>
     </div>
   </div>
@@ -124,31 +80,46 @@
 <!-- BENEFICIOS -->
 <section class="bg-black py-20 text-gray-300">
   <div class="max-w-6xl mx-auto px-6">
-    <h2 class="text-3xl md:text-4xl font-bold text-white mb-8">
+    <h2 class="text-3xl md:text-4xl font-bold text-white mb-12 text-center select-none">
       ¿Por qué elegir <span class="text-pink-400">PlayTimeUY</span>?
     </h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-[1.02] transition-transform">
-        <h3 class="text-xl font-semibold text-pink-400 mb-2">💰 100% Ganancias</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300 select-none">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 mb-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c.92 0 1.8.18 2.6.5M9.4 7.5A6 6 0 1112 20a6 6 0 01-2.6-12.5M12 14v.01" />
+        </svg>
+        <h3 class="text-xl font-semibold text-pink-400 mb-2">100% Ganancias</h3>
         <p>Todo lo que generes es tuyo, sin comisiones ocultas.</p>
       </article>
-      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-[1.02] transition-transform">
-        <h3 class="text-xl font-semibold text-pink-400 mb-2">🔒 Seguridad</h3>
+      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300 select-none">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 mb-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c.86 0 1.5-.64 1.5-1.5S12.86 8 12 8s-1.5.64-1.5 1.5S11.14 11 12 11z" />
+        </svg>
+        <h3 class="text-xl font-semibold text-pink-400 mb-2">Seguridad</h3>
         <p>Protegemos tu contenido y privacidad con tecnología avanzada.</p>
       </article>
-      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-[1.02] transition-transform">
-        <h3 class="text-xl font-semibold text-pink-400 mb-2">⚡ Rápido y Fácil</h3>
+      <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300 select-none">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 mb-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18m-7 5h7" />
+        </svg>
+        <h3 class="text-xl font-semibold text-pink-400 mb-2">Rápido y Fácil</h3>
         <p>Empezá a publicar y monetizar en minutos.</p>
       </article>
     </div>
   </div>
 </section>
 
-<!-- SCRIPT -->
+<!-- JS -->
 <script>
-  document.getElementById('nav-toggle')?.addEventListener('click', () => {
-    alert('Abrir menú móvil: aquí podrías integrar un menú desplegable.');
+  document.addEventListener('DOMContentLoaded', () => {
+    const navToggle = document.getElementById('nav-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    navToggle?.addEventListener('click', () => {
+      const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+      navToggle.setAttribute('aria-expanded', !expanded);
+      mobileMenu.classList.toggle('hidden');
+    });
   });
 </script>
-
 {% endblock %}

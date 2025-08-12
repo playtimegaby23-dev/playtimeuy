@@ -2,8 +2,8 @@
 {% block title %}Registro - PlayTimeUY{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black px-6">
-  <div class="bg-white/20 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl p-10 max-w-md w-full text-white animate-fadeIn">
+<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black px-6 py-10">
+  <div class="bg-white/20 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl p-10 max-w-md w-full text-white animate-fadeIn" role="main" aria-label="Formulario de registro">
 
     <h2 class="text-4xl font-extrabold mb-8 text-center tracking-wider drop-shadow-md">
       Crear cuenta en <span class="text-indigo-400">PlayTimeUY</span>
@@ -11,16 +11,14 @@
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="mb-6 space-y-3">
+        <div class="mb-6 space-y-3" role="alert">
           {% for category, message in messages %}
             <div class="text-sm px-5 py-3 rounded-lg font-medium
               {% if category == 'danger' %}
                 bg-red-600/90 text-red-100 shadow-md
               {% else %}
                 bg-green-600/90 text-green-100 shadow-md
-              {% endif %}"
-              role="alert"
-            >
+              {% endif %}">
               {{ message }}
             </div>
           {% endfor %}
@@ -28,59 +26,136 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST" class="grid grid-cols-1 gap-5" onsubmit="return validateForm()">
-      <input type="text" name="full_name" placeholder="Nombre completo" required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+    <form method="POST" class="grid grid-cols-1 gap-5" onsubmit="return validateForm()" novalidate>
+      <input
+        type="text"
+        name="full_name"
+        placeholder="Nombre completo"
+        required
+        autocomplete="name"
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-label="Nombre completo"
+      />
 
-      <input type="text" name="username" placeholder="Nombre de usuario" required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+      <input
+        type="text"
+        name="username"
+        placeholder="Nombre de usuario"
+        required
+        autocomplete="username"
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-label="Nombre de usuario"
+      />
 
-      <input type="email" id="email" name="email" placeholder="Correo electrónico" required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="Correo electrónico"
+        required
+        autocomplete="email"
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-describedby="emailHelp"
+        aria-label="Correo electrónico"
+      />
 
       <div class="relative">
-        <input type="password" id="password" name="password" placeholder="Contraseña" required
-          class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-12 transition" />
-        <button type="button" onclick="togglePassword('password')"
-          class="absolute top-3 right-3 text-white hover:text-indigo-400 transition text-xl select-none">👁️</button>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Contraseña"
+          required
+          autocomplete="new-password"
+          class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-12 transition"
+          aria-label="Contraseña"
+        />
+        <button
+          type="button"
+          onclick="togglePassword('password')"
+          class="absolute top-3 right-3 text-white hover:text-indigo-400 transition text-xl select-none"
+          aria-label="Mostrar u ocultar contraseña"
+          tabindex="-1"
+        >👁️</button>
       </div>
 
       <div class="relative">
-        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmar contraseña" required
-          class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-12 transition" />
-        <button type="button" onclick="togglePassword('confirm_password')"
-          class="absolute top-3 right-3 text-white hover:text-indigo-400 transition text-xl select-none">👁️</button>
+        <input
+          type="password"
+          id="confirm_password"
+          name="confirm_password"
+          placeholder="Confirmar contraseña"
+          required
+          autocomplete="new-password"
+          class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-12 transition"
+          aria-label="Confirmar contraseña"
+        />
+        <button
+          type="button"
+          onclick="togglePassword('confirm_password')"
+          class="absolute top-3 right-3 text-white hover:text-indigo-400 transition text-xl select-none"
+          aria-label="Mostrar u ocultar contraseña"
+          tabindex="-1"
+        >👁️</button>
       </div>
 
-      <input type="date" name="dob" required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+      <input
+        type="date"
+        name="dob"
+        required
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-label="Fecha de nacimiento"
+      />
 
-      <input type="text" name="country" placeholder="País" required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+      <input
+        type="text"
+        name="country"
+        placeholder="País"
+        required
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-label="País"
+      />
 
-      <input type="text" name="twitter" placeholder="Twitter (opcional)"
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+      <input
+        type="text"
+        name="twitter"
+        placeholder="Twitter (opcional)"
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-label="Twitter"
+      />
 
-      <input type="text" name="instagram" placeholder="Instagram (opcional)"
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+      <input
+        type="text"
+        name="instagram"
+        placeholder="Instagram (opcional)"
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-label="Instagram"
+      />
 
-      <select name="role" required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+      <select
+        name="role"
+        required
+        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        aria-label="Selecciona tu rol"
+      >
         <option value="" disabled selected>Selecciona tu rol</option>
         <option value="creator">Creador/a</option>
         <option value="buyer">Comprador/a</option>
         <option value="promoter">Promotor/a</option>
       </select>
 
-      <button type="submit"
-        class="bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-400 font-semibold py-3 rounded-xl shadow-lg shadow-indigo-500/40 transition">
+      <button
+        type="submit"
+        class="bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-400 font-semibold py-3 rounded-xl shadow-lg shadow-indigo-500/40 transition"
+        aria-label="Registrarme"
+      >
         Registrarme
       </button>
     </form>
 
     <p class="mt-8 text-center text-sm text-gray-300">
       ¿Ya tenés cuenta?
-      <a href="{{ url_for('login') }}" class="underline text-indigo-400 hover:text-white transition">Iniciar sesión</a>
+      <a href="{{ url_for('main.login') }}" class="underline text-indigo-400 hover:text-white transition">Iniciar sesión</a>
     </p>
   </div>
 </div>
@@ -96,7 +171,6 @@
       transform: translateY(0);
     }
   }
-
   .animate-fadeIn {
     animation: fadeIn 0.7s ease-out forwards;
   }
@@ -105,6 +179,7 @@
 <script>
   function togglePassword(id) {
     const input = document.getElementById(id);
+    if (!input) return;
     input.type = input.type === 'password' ? 'text' : 'password';
   }
 
