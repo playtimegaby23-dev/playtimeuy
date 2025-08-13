@@ -2,210 +2,108 @@
 {% block title %}Registro - PlayTimeUY{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black px-6 py-10">
-  <div class="bg-white/20 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl p-10 max-w-md w-full text-white animate-fadeIn" role="main" aria-label="Formulario de registro">
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col lg:flex-row">
 
-    <h2 class="text-4xl font-extrabold mb-8 text-center tracking-wider drop-shadow-md">
-      Crear cuenta en <span class="text-indigo-400">PlayTimeUY</span>
-    </h2>
+  <!-- Panel de bienvenida -->
+  <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-fuchsia-700 via-purple-800 to-indigo-900 items-center justify-center p-12 text-white">
+    <div class="max-w-md space-y-6 animate-fadeInLeft text-center">
+      <h1 class="text-5xl font-extrabold leading-tight">
+        ¡Bienvenido a <span class="text-fuchsia-400">PlayTimeUY</span>!
+      </h1>
+      <p class="text-lg opacity-90">
+        Unite a nuestra comunidad, comparte tu contenido y conecta con creadores y fans sin comisiones.
+      </p>
+      <img src="{{ url_for('static', filename='images/logo_navbar.png') }}" alt="PlayTimeUY" class="w-32 mx-auto drop-shadow-lg">
+    </div>
+  </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="mb-6 space-y-3" role="alert">
-          {% for category, message in messages %}
-            <div class="text-sm px-5 py-3 rounded-lg font-medium
-              {% if category == 'danger' %}
-                bg-red-600/90 text-red-100 shadow-md
-              {% else %}
-                bg-green-600/90 text-green-100 shadow-md
-              {% endif %}">
-              {{ message }}
-            </div>
-          {% endfor %}
+  <!-- Formulario -->
+  <div class="flex-1 flex items-center justify-center p-6 lg:p-12">
+    <div class="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl p-8 w-full max-w-lg text-white animate-fadeInUp">
+
+      <h2 class="text-3xl font-bold mb-6 text-center">
+        Crear cuenta
+      </h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-6 space-y-3" role="alert">
+            {% for category, message in messages %}
+              <div class="text-sm px-5 py-3 rounded-lg font-medium
+                {% if category == 'danger' %}
+                  bg-red-600/90 text-red-100 shadow-md
+                {% else %}
+                  bg-green-600/90 text-green-100 shadow-md
+                {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-5" id="registroForm" novalidate>
+        <input type="text" name="full_name" placeholder="Nombre completo" required autocomplete="name" class="input-field col-span-2">
+        <input type="text" name="username" placeholder="Nombre de usuario" required autocomplete="username" class="input-field">
+        <input type="email" id="email" name="email" placeholder="Correo electrónico" required autocomplete="email" class="input-field">
+
+        <div class="relative">
+          <input type="password" id="password" name="password" placeholder="Contraseña" required autocomplete="new-password" class="input-field pr-12">
+          <button type="button" data-toggle="password" class="toggle-btn">👁️</button>
         </div>
-      {% endif %}
-    {% endwith %}
 
-    <form method="POST" class="grid grid-cols-1 gap-5" onsubmit="return validateForm()" novalidate>
-      <input
-        type="text"
-        name="full_name"
-        placeholder="Nombre completo"
-        required
-        autocomplete="name"
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-label="Nombre completo"
-      />
+        <div class="relative">
+          <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmar contraseña" required autocomplete="new-password" class="input-field pr-12">
+          <button type="button" data-toggle="confirm_password" class="toggle-btn">👁️</button>
+        </div>
 
-      <input
-        type="text"
-        name="username"
-        placeholder="Nombre de usuario"
-        required
-        autocomplete="username"
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-label="Nombre de usuario"
-      />
+        <input type="date" name="dob" required class="input-field">
+        <input type="text" name="country" placeholder="País" required class="input-field">
+        <input type="text" name="twitter" placeholder="Twitter (opcional)" class="input-field">
+        <input type="text" name="instagram" placeholder="Instagram (opcional)" class="input-field">
 
-      <input
-        type="email"
-        id="email"
-        name="email"
-        placeholder="Correo electrónico"
-        required
-        autocomplete="email"
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-describedby="emailHelp"
-        aria-label="Correo electrónico"
-      />
+        <select name="role" required class="input-field col-span-2">
+          <option value="" disabled selected>Selecciona tu rol</option>
+          <option value="creator">Creador/a</option>
+          <option value="buyer">Comprador/a</option>
+          <option value="promoter">Promotor/a</option>
+        </select>
 
-      <div class="relative">
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Contraseña"
-          required
-          autocomplete="new-password"
-          class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-12 transition"
-          aria-label="Contraseña"
-        />
-        <button
-          type="button"
-          onclick="togglePassword('password')"
-          class="absolute top-3 right-3 text-white hover:text-indigo-400 transition text-xl select-none"
-          aria-label="Mostrar u ocultar contraseña"
-          tabindex="-1"
-        >👁️</button>
-      </div>
+        <button type="submit" class="col-span-2 btn-gradient">
+          Registrarme
+        </button>
+      </form>
 
-      <div class="relative">
-        <input
-          type="password"
-          id="confirm_password"
-          name="confirm_password"
-          placeholder="Confirmar contraseña"
-          required
-          autocomplete="new-password"
-          class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-12 transition"
-          aria-label="Confirmar contraseña"
-        />
-        <button
-          type="button"
-          onclick="togglePassword('confirm_password')"
-          class="absolute top-3 right-3 text-white hover:text-indigo-400 transition text-xl select-none"
-          aria-label="Mostrar u ocultar contraseña"
-          tabindex="-1"
-        >👁️</button>
-      </div>
-
-      <input
-        type="date"
-        name="dob"
-        required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-label="Fecha de nacimiento"
-      />
-
-      <input
-        type="text"
-        name="country"
-        placeholder="País"
-        required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-label="País"
-      />
-
-      <input
-        type="text"
-        name="twitter"
-        placeholder="Twitter (opcional)"
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-label="Twitter"
-      />
-
-      <input
-        type="text"
-        name="instagram"
-        placeholder="Instagram (opcional)"
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-label="Instagram"
-      />
-
-      <select
-        name="role"
-        required
-        class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-        aria-label="Selecciona tu rol"
-      >
-        <option value="" disabled selected>Selecciona tu rol</option>
-        <option value="creator">Creador/a</option>
-        <option value="buyer">Comprador/a</option>
-        <option value="promoter">Promotor/a</option>
-      </select>
-
-      <button
-        type="submit"
-        class="bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-400 font-semibold py-3 rounded-xl shadow-lg shadow-indigo-500/40 transition"
-        aria-label="Registrarme"
-      >
-        Registrarme
-      </button>
-    </form>
-
-    <p class="mt-8 text-center text-sm text-gray-300">
-      ¿Ya tenés cuenta?
-      <a href="{{ url_for('main.login') }}" class="underline text-indigo-400 hover:text-white transition">Iniciar sesión</a>
-    </p>
+      <p class="mt-6 text-center text-sm text-gray-300">
+        ¿Ya tenés cuenta?
+        <a href="{{ url_for('main.login') }}" class="underline text-fuchsia-400 hover:text-white transition">Iniciar sesión</a>
+      </p>
+    </div>
   </div>
 </div>
 
 <style>
-  @keyframes fadeIn {
-    0% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @keyframes fadeInUp { 0% {opacity:0; transform:translateY(20px);} 100% {opacity:1; transform:translateY(0);} }
+  @keyframes fadeInLeft { 0% {opacity:0; transform:translateX(-20px);} 100% {opacity:1; transform:translateX(0);} }
+  .animate-fadeInUp { animation: fadeInUp .7s ease-out forwards; }
+  .animate-fadeInLeft { animation: fadeInLeft .7s ease-out forwards; }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg bg-white/15 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition;
   }
-  .animate-fadeIn {
-    animation: fadeIn 0.7s ease-out forwards;
+  .toggle-btn {
+    @apply absolute top-3 right-3 text-white hover:text-fuchsia-400 transition text-xl select-none;
+  }
+  .btn-gradient {
+    @apply w-full py-3 rounded-xl font-semibold text-white transition shadow-lg;
+    background: linear-gradient(90deg, #d946ef, #9333ea);
+    box-shadow: 0 4px 15px rgba(217,70,239,0.4);
+  }
+  .btn-gradient:hover {
+    background: linear-gradient(90deg, #e879f9, #a855f7);
+    box-shadow: 0 6px 20px rgba(217,70,239,0.6);
   }
 </style>
 
-<script>
-  function togglePassword(id) {
-    const input = document.getElementById(id);
-    if (!input) return;
-    input.type = input.type === 'password' ? 'text' : 'password';
-  }
-
-  function validateForm() {
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value.trim();
-    const confirm = document.getElementById('confirm_password').value.trim();
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-    if (!emailPattern.test(email)) {
-      alert('Correo electrónico inválido.');
-      return false;
-    }
-
-    if (pass.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres.');
-      return false;
-    }
-
-    if (pass !== confirm) {
-      alert('Las contraseñas no coinciden.');
-      return false;
-    }
-
-    return true;
-  }
-</script>
+<script src="{{ url_for('static', filename='js/registro.js') }}"></script>
 {% endblock %}
