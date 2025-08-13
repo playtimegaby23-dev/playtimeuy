@@ -11,9 +11,9 @@
         ¡Bienvenido a <span class="text-fuchsia-400">PlayTimeUY</span>!
       </h1>
       <p class="text-lg opacity-90">
-        Unite a nuestra comunidad, comparte tu contenido y conecta con creadores y fans sin comisiones.
+        Tu espacio para mostrarte al mundo y quedarte con el 100% de tus ganancias.
       </p>
-      <img src="{{ url_for('static', filename='images/logo_navbar.png') }}" alt="PlayTimeUY" class="w-32 mx-auto drop-shadow-lg">
+      <img src="{{ url_for('static', filename='img/banner.png') }}" alt="PlayTimeUY" class="w-48 mx-auto drop-shadow-lg">
     </div>
   </div>
 
@@ -83,8 +83,14 @@
 </div>
 
 <style>
-  @keyframes fadeInUp { 0% {opacity:0; transform:translateY(20px);} 100% {opacity:1; transform:translateY(0);} }
-  @keyframes fadeInLeft { 0% {opacity:0; transform:translateX(-20px);} 100% {opacity:1; transform:translateX(0);} }
+  @keyframes fadeInUp {
+    0% {opacity:0; transform:translateY(20px);}
+    100% {opacity:1; transform:translateY(0);}
+  }
+  @keyframes fadeInLeft {
+    0% {opacity:0; transform:translateX(-20px);}
+    100% {opacity:1; transform:translateX(0);}
+  }
   .animate-fadeInUp { animation: fadeInUp .7s ease-out forwards; }
   .animate-fadeInLeft { animation: fadeInLeft .7s ease-out forwards; }
 
