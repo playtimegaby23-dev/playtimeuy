@@ -1,4 +1,18 @@
-/* 🎯 Reset básico y normalización */
+/* 🎨 Variables de color y fuente */
+:root {
+    --color-primario: #ff4081;
+    --color-primario-hover: #e73370;
+    --color-texto: #222;
+    --color-fondo: #f8f8f8;
+    --color-nav-bg: rgba(255, 255, 255, 0.9);
+    --color-nav-hover: var(--color-primario);
+    --color-overlay: rgba(0, 0, 0, 0.45);
+    --fuente-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --radius: 8px;
+    --shadow-suave: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* 🛠 Reset y normalización */
 *,
 *::before,
 *::after {
@@ -12,50 +26,55 @@ html {
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f8f8;
-    color: #222;
+    font-family: var(--fuente-base);
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
 }
 
-/* Links */
+/* 🔗 Links */
 a {
     text-decoration: none;
     color: inherit;
     transition: color 0.3s ease;
 }
+a:hover {
+    color: var(--color-nav-hover);
+}
 
-/* Navegación */
+/* 📌 Navegación */
 nav {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--color-nav-bg);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 1rem 2rem;
     position: relative;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-suave);
 }
-
 nav ul {
     list-style: none;
     display: flex;
     justify-content: flex-end;
     align-items: center;
     gap: 1.5rem;
+    flex-wrap: wrap;
 }
-
 nav a {
     font-weight: 600;
     color: #333;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
-
 nav a:hover {
-    color: #ff4081;
+    background-color: rgba(255, 64, 129, 0.1);
+    color: var(--color-nav-hover);
 }
 
-/* Banner */
+/* 🎥 Banner */
 .banner-container {
     position: relative;
     width: 100%;
@@ -63,19 +82,15 @@ nav a:hover {
     overflow: hidden;
     background: #000;
 }
-
-/* Video de fondo */
 #bg-video {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: brightness(0.6);
+    filter: brightness(0.65);
     z-index: -2;
 }
-
-/* Imagen de fondo (fallback) */
 #bg-image {
     position: absolute;
     inset: 0;
@@ -83,7 +98,7 @@ nav a:hover {
     z-index: -3;
 }
 
-/* Botones sobre banner */
+/* ✨ Botones sobre banner */
 .banner-buttons {
     position: absolute;
     bottom: 40px;
@@ -91,70 +106,72 @@ nav a:hover {
     display: flex;
     gap: 1rem;
     z-index: 2;
+    flex-wrap: wrap;
 }
-
 .btn {
-    background-color: #ff4081;
+    background-color: var(--color-primario);
     color: #fff;
     padding: 0.75rem 1.5rem;
     border: none;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: var(--radius);
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-suave);
 }
-
-.btn:hover {
-    background-color: #e73370;
+.btn:hover,
+.btn:focus {
+    background-color: var(--color-primario-hover);
     transform: translateY(-2px);
 }
+.btn:active {
+    transform: scale(0.98);
+}
 
-/* Botón transparente */
+/* 🪟 Botón transparente */
 .btn-outline {
     background: rgba(255,255,255,0.15);
     border: 2px solid rgba(255,255,255,0.6);
     color: #fff;
     backdrop-filter: blur(4px);
 }
-
 .btn-outline:hover {
     background-color: rgba(255,255,255,0.9);
     color: #111;
 }
 
-/* Oscurecer para destacar texto */
+/* 🌑 Oscurecer para resaltar texto */
 body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: var(--color-overlay);
     pointer-events: none;
     z-index: -1;
 }
 
-/* Responsive */
+/* 📱 Responsive */
+@media (max-width: 1024px) {
+    .banner-container {
+        height: 500px;
+    }
+}
 @media (max-width: 768px) {
     .banner-container {
         height: 400px;
     }
-
     .banner-buttons {
         flex-direction: column;
         bottom: 20px;
         right: 20px;
         width: calc(100% - 40px);
     }
-
     .btn {
         width: 100%;
         font-size: 1.1rem;
     }
-
     nav ul {
         justify-content: center;
-        flex-wrap: wrap;
-        gap: 1rem;
     }
 }

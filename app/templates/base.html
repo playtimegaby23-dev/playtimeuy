@@ -1,188 +1,51 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es" class="scroll-smooth antialiased">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="description" content="PlayTimeUY - Plataforma para creadoras uruguayas, controla y monetiza tu contenido." />
-  <meta name="author" content="PlayTimeUY" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}PlayTimeUY{% endblock %}</title>
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
-
-  <!-- TailwindCSS -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Poppins', 'sans-serif'] },
+          colors: {
+            primary: '#ec4899',
+            secondary: '#0f172a',
+            dark: '#0e0e10',
+          },
+        },
+      },
+    };
+  </script>
 
-  <!-- CSS personalizado -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
 
-  {% block extra_head %}{% endblock %}
+  <!-- Meta SEO opcionales -->
+  <meta name="description" content="PlayTimeUY - Plataforma para creadoras uruguayas sin comisiones ocultas.">
+  <meta name="author" content="PlayTimeUY">
+  <meta name="theme-color" content="#ec4899">
 </head>
-<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 
-  <!--
-    NOTA IMPORTANTE:
-    El banner que quiero quitar es el de index y que el banner que tengo en login es el que quiero en mi index , asi tal cual
-  -->
-
+<body class="bg-black text-white font-sans overflow-x-hidden">
+  
   <!-- Navbar -->
-  {% block navbar %}
-  <nav class="bg-gray-900/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800 shadow-lg">
-    <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-      
-      <!-- Logo -->
-      <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 text-2xl font-extrabold tracking-tight group">
-        <span class="bg-gradient-to-r from-pink-500 to-purple-500 px-3 py-1 rounded-full shadow-lg transition-transform duration-300 group-hover:scale-110">
-          PT
-        </span>
-        <span class="transition-colors duration-300 group-hover:text-pink-400">
-          PlayTime<span class="text-pink-500">UY</span>
-        </span>
-      </a>
+  {% include 'navbar.html' %}
 
-      <!-- Menú Desktop -->
-      <ul class="hidden md:flex items-center space-x-6 font-medium">
-        <li><a href="{{ url_for('main.index') }}" class="hover:text-pink-400 transition">Inicio</a></li>
-        <li><a href="{{ url_for('main.dashboard') }}" class="hover:text-pink-400 transition">Explorar</a></li>
-        
-        {% if 'user' in session %}
-          <li><a href="{{ url_for('main.dashboard') }}" class="hover:text-pink-400 transition">Dashboard</a></li>
-          <li>
-            <a href="{{ url_for('main.logout') }}" class="px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition">
-              Cerrar sesión
-            </a>
-          </li>
-        {% else %}
-          <li>
-            <a href="{{ url_for('main.login') }}" class="px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition">
-              Ingresar
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('main.register') }}" class="px-5 py-2 rounded-full border border-pink-500 text-pink-400 font-semibold hover:bg-pink-500 hover:text-white shadow-md hover:shadow-lg transform hover:scale-105 transition">
-              Registrarse
-            </a>
-          </li>
-        {% endif %}
-      </ul>
+  <!-- Banner opcional (video o imagen) -->
+  {% block banner %}{% endblock %}
 
-      <!-- Botón móvil -->
-      <button id="btn-mobile-menu" class="md:hidden focus:outline-none" aria-label="Abrir menú" aria-expanded="false">
-        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-          <path d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Menú móvil -->
-    <div id="mobile-menu" class="hidden md:hidden bg-gray-900/95 px-6 py-5 border-t border-gray-800">
-      <ul class="space-y-4 font-semibold text-gray-300">
-        <li><a href="{{ url_for('main.index') }}" class="block hover:text-pink-400 transition">Inicio</a></li>
-        <li><a href="{{ url_for('main.dashboard') }}" class="block hover:text-pink-400 transition">Explorar</a></li>
-        
-        {% if 'user' in session %}
-          <li><a href="{{ url_for('main.dashboard') }}" class="block hover:text-pink-400 transition">Dashboard</a></li>
-          <li>
-            <a href="{{ url_for('main.logout') }}" class="block px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition">
-              Cerrar sesión
-            </a>
-          </li>
-        {% else %}
-          <li>
-            <a href="{{ url_for('main.login') }}" class="block px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition">
-              Ingresar
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('main.register') }}" class="block px-5 py-2 rounded-full border border-pink-500 text-pink-400 font-semibold hover:bg-pink-500 hover:text-white shadow-md hover:shadow-lg transform hover:scale-105 transition">
-              Registrarse
-            </a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
-  </nav>
-  {% endblock %}
-
-  <!-- Mensajes flash -->
-  <div class="container mx-auto px-6 mt-6 max-w-xl">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="mb-4 rounded border px-5 py-3 text-sm shadow
-            {% if category == 'success' %}bg-green-700 text-green-100 border-green-600
-            {% elif category == 'danger' %}bg-red-700 text-red-100 border-red-600
-            {% elif category == 'warning' %}bg-yellow-700 text-yellow-100 border-yellow-600
-            {% else %}bg-gray-700 text-gray-100 border-gray-600{% endif %}">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-  </div>
-
-  <!-- Contenido -->
-  <main class="flex-grow container mx-auto px-6 py-8 max-w-7xl">
-
-    {# -----------------------------------------------------------
-       BLOQUE BANNER: por defecto aquí colocamos el banner usado
-       en el login (ese es el que quieres en INDEX). Si una vista
-       no desea mostrarlo, puede sobrescribir este bloque con
-       contenido vacío: {% block banner %}{% endblock %}.
-       ----------------------------------------------------------- #}
-
-    {% block banner %}
-    <!-- BANNER (este es el banner del login que ahora será el banner por defecto en INDEX) -->
-    <section class="relative flex items-center justify-center min-h-[60vh] md:min-h-screen text-center text-white pt-24">
-      <!-- VIDEO BACKGROUND -->
-      <video class="absolute inset-0 w-full h-full object-cover -z-20" autoplay muted loop playsinline aria-hidden="true">
-        <source src="{{ url_for('static', filename='video/banner.mp4') }}" type="video/mp4">
-        Tu navegador no soporta video HTML5.
-      </video>
-
-      <!-- OVERLAY -->
-      <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80 -z-10"></div>
-
-      <!-- CONTENT -->
-      <div class="max-w-4xl px-4 animate-fade-in-up">
-        <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight select-none">
-          Bienvenid@ a
-          <span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-300 via-fuchsia-400 to-purple-500">
-            PlayTimeUY
-          </span>
-        </h1>
-        <p class="text-md md:text-xl text-gray-200 font-light">
-          La plataforma donde las <span class="font-semibold text-white">creadoras uruguayas</span>
-          se quedan con el <span class="font-bold text-pink-300">100%</span> de sus ganancias.
-        </p>
-      </div>
-    </section>
-    {% endblock %}
-
+  <!-- Contenido principal -->
+  <main>
     {% block content %}{% endblock %}
   </main>
 
   <!-- Footer -->
-  <footer class="bg-gray-800 text-gray-400 text-center py-6 mt-16 select-none border-t border-gray-700">
-    <p>&copy; 2025 PlayTimeUY. Todos los derechos reservados.</p>
-  </footer>
+  {% include 'footer.html' %}
 
-  <!-- Script Menú móvil -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const btnMobileMenu = document.getElementById('btn-mobile-menu');
-      const mobileMenu = document.getElementById('mobile-menu');
-      if (btnMobileMenu && mobileMenu) {
-        btnMobileMenu.addEventListener('click', () => {
-          const expanded = btnMobileMenu.getAttribute('aria-expanded') === 'true';
-          btnMobileMenu.setAttribute('aria-expanded', !expanded);
-          mobileMenu.classList.toggle('hidden');
-        });
-      }
-    });
-  </script>
-
-  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -192,7 +192,10 @@ def register():
         if AUTH_AVAILABLE and firebase_auth:
             try:
                 user = firebase_auth.create_user_with_email_and_password(email, password)
-                local_id = user.get('localId') or str(uuid.uuid4())
+                local_id = user.get('localId')
+                if not local_id:
+                    # Intentar obtener UID de user['localId'] o fallback
+                    local_id = user.get('localId', str(uuid.uuid4()))
                 if USE_FIRESTORE and db:
                     db.collection("usuarios").document(local_id).set({
                         "full_name": full_name,
@@ -204,6 +207,7 @@ def register():
                 flash("Registro exitoso. Verifica tu correo si es necesario.", "success")
                 return redirect(url_for("main.login"))
             except Exception as e:
+                print("[Firebase Register] Error:", e)
                 flash(f"No se pudo registrar en remoto: {e}", "warning")
 
         # Registro local fallback
@@ -237,7 +241,8 @@ def login():
                 session['email'] = email
                 flash("Bienvenido/a (remoto).", "success")
                 return redirect(url_for("main.dashboard"))
-            except Exception:
+            except Exception as e:
+                print("[Firebase Login] Error:", e)
                 flash("Fallo remoto, intentando local.", "warning")
 
         # Login local fallback
@@ -247,7 +252,8 @@ def login():
             session['email'] = user["email"]
             flash("Bienvenido/a (local).", "success")
             return redirect(url_for("main.dashboard"))
-        except Exception:
+        except Exception as e:
+            print("[Local Login] Error:", e)
             flash("Credenciales incorrectas.", "danger")
 
     return render_template("login.html")
@@ -291,10 +297,10 @@ def logout():
     flash("Has cerrado sesión.", "success")
     return redirect(url_for("main.login"))
 
-@main.app_errorhandler(404)
+@main.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
 
-@main.app_errorhandler(500)
+@main.errorhandler(500)
 def server_error(e):
     return render_template("500.html"), 500
