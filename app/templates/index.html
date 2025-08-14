@@ -20,34 +20,34 @@
   </video>
 
   <!-- Capa de gradiente -->
-  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/80 z-10"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90 z-10"></div>
 
   <!-- Slogan superior -->
-  <div class="z-20 py-8 px-4 max-w-4xl w-full">
-    <h2 class="text-xl md:text-2xl font-semibold text-pink-400">
+  <div class="z-20 py-6 px-4 max-w-4xl w-full animate-fade-in">
+    <h2 class="text-pink-400 font-medium text-[clamp(1rem,2vw,1.5rem)] tracking-wide">
       Descubrí una nueva forma de crear y ganar sin límites
     </h2>
   </div>
 
   <!-- Contenido principal -->
-  <div class="z-20 max-w-4xl px-4 animate-fade-in-up">
-    <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+  <div class="z-20 max-w-4xl px-4 animate-fade-in-up space-y-6">
+    <h1 class="font-extrabold leading-tight text-[clamp(2rem,6vw,4rem)]">
       Bienvenid@ a
       <span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-300 via-fuchsia-400 to-purple-500 animate-gradient">
         PlayTimeUY
       </span>
     </h1>
-    <p class="text-lg md:text-2xl text-gray-200 font-light mb-10">
+    <p class="text-gray-200 font-light text-[clamp(1rem,2.5vw,1.25rem)] max-w-2xl mx-auto">
       La plataforma donde las <span class="font-semibold text-white">creadoras uruguayas</span>
       se quedan con el <span class="font-bold text-pink-300">100%</span> de sus ganancias.
     </p>
-    <div class="flex flex-col sm:flex-row gap-6 justify-center">
+    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
       <a href="{{ url_for('main.login') }}" 
-         class="w-44 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold shadow-lg hover:shadow-pink-500/50 hover:scale-105 transition duration-300">
+         class="w-full sm:w-44 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold shadow-lg hover:shadow-pink-500/50 hover:scale-105 transition duration-300">
         Ingresar
       </a>
       <a href="{{ url_for('main.register') }}" 
-         class="w-44 px-6 py-3 rounded-full border-2 border-pink-400 text-white hover:bg-pink-500/20 transition duration-300">
+         class="w-full sm:w-44 px-6 py-3 rounded-full border-2 border-pink-400 text-white hover:bg-pink-500/20 transition duration-300">
         Registrarse
       </a>
     </div>
@@ -59,32 +59,38 @@
 <main>
   <section class="bg-black py-20 text-gray-300">
     <div class="max-w-6xl mx-auto px-6">
-      <h2 class="text-3xl md:text-4xl font-bold text-white mb-12 text-center">
+      <h2 class="text-center text-[clamp(1.5rem,4vw,2.5rem)] font-bold text-white mb-12">
         ¿Por qué elegir <span class="text-pink-400">PlayTimeUY</span>?
       </h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
-        <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mb-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c.92 0 1.8.18 2.6.5M9.4 7.5A6 6 0 1112 20a6 6 0 01-2.6-12.5M12 14v.01" />
-          </svg>
-          <h3 class="text-xl font-semibold text-pink-400 mb-2">100% Ganancias</h3>
+        <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300 text-center">
+          <div class="flex justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c.92 0 1.8.18 2.6.5M9.4 7.5A6 6 0 1112 20a6 6 0 01-2.6-12.5M12 14v.01" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-pink-400 mb-2">100% Ganancias</h3>
           <p>Todo lo que generes es tuyo, sin comisiones ocultas.</p>
         </article>
 
-        <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mb-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c.86 0 1.5-.64 1.5-1.5S12.86 8 12 8s-1.5.64-1.5 1.5S11.14 11 12 11z" />
-          </svg>
-          <h3 class="text-xl font-semibold text-pink-400 mb-2">Seguridad</h3>
+        <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300 text-center">
+          <div class="flex justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c.86 0 1.5-.64 1.5-1.5S12.86 8 12 8s-1.5.64-1.5 1.5S11.14 11 12 11z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-pink-400 mb-2">Seguridad</h3>
           <p>Protegemos tu contenido y privacidad con tecnología avanzada.</p>
         </article>
 
-        <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mb-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18m-7 5h7" />
-          </svg>
-          <h3 class="text-xl font-semibold text-pink-400 mb-2">Rápido y Fácil</h3>
+        <article class="p-6 rounded-xl bg-gradient-to-b from-gray-900 to-black shadow-lg hover:scale-105 hover:shadow-pink-500/30 transition duration-300 text-center">
+          <div class="flex justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18m-7 5h7" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-pink-400 mb-2">Rápido y Fácil</h3>
           <p>Empezá a publicar y monetizar en minutos.</p>
         </article>
 
