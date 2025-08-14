@@ -1,22 +1,26 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from datetime import datetime
 import re
+from firebase_config import auth, db  # Importa tu configuración inicializada
 
 main = Blueprint('main', __name__)
 
-# Firebase imports y config ya deberían estar inicializados antes y accesibles aquí
-# auth = pyrebase auth
-# db = firestore client
-
 EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
 
+
+# ------------------- PÁGINA PRINCIPAL -------------------
+@main.route("/")
+def home():
+    return render_template("index.html")
+
+
+# ------------------- REGISTRO -------------------
 @main.route('/register', methods=['GET', 'POST'])
 def register():
     if 'user' in session:
         return redirect(url_for('main.dashboard'))
 
     if request.method == 'POST':
-        # Obtener datos del formulario
         full_name = request.form.get('full_name', '').strip()
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
@@ -28,7 +32,6 @@ def register():
         instagram = request.form.get('instagram', '').strip()
         role = request.form.get('role', '').strip()
 
-        # Validaciones básicas
         if not all([full_name, username, email, password, confirm_password, dob, country, role]):
             flash("Por favor, completa todos los campos obligatorios.", "danger")
             return redirect(url_for('main.register'))
@@ -45,15 +48,11 @@ def register():
             flash("Las contraseñas no coinciden.", "danger")
             return redirect(url_for('main.register'))
 
-        # Aquí puedes agregar validaciones extra como username único, fecha válida, etc.
-
         try:
-            # Crear usuario en Firebase Auth
             user = auth.create_user_with_email_and_password(email, password)
             auth.send_email_verification(user['idToken'])
             user_id = user['localId']
 
-            # Guardar datos en Firestore
             db.collection('usuarios').document(user_id).set({
                 "full_name": full_name,
                 "username": username,
@@ -80,3 +79,66 @@ def register():
                 flash("Ocurrió un error al registrar. Intenta nuevamente.", "danger")
 
     return render_template('register.html')
+
+
+# ------------------- LOGIN -------------------
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'user' in session:
+        return redirect(url_for('main.dashboard'))
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '').strip()
+
+        try:
+            user = auth.sign_in_with_email_and_password(email, password)
+            user_info = auth.get_account_info(user['idToken'])['users'][0]
+
+            if not user_info.get("emailVerified", False):
+                flash("Debes verificar tu correo antes de iniciar sesión.", "warning")
+                return redirect(url_for('main.login'))
+
+            session['user'] = {
+                "id": user_info['localId'],
+                "email": user_info['email']
+            }
+
+            flash("Inicio de sesión exitoso.", "success")
+            return redirect(url_for('main.dashboard'))
+
+        except Exception as e:
+            error_msg = str(e)
+            if "INVALID_PASSWORD" in error_msg:
+                flash("Contraseña incorrecta.", "danger")
+            elif "EMAIL_NOT_FOUND" in error_msg:
+                flash("No existe una cuenta con ese correo.", "danger")
+            else:
+                flash("Error al iniciar sesión. Intenta nuevamente.", "danger")
+
+    return render_template('login.html')
+
+
+# ------------------- DASHBOARD (Privado) -------------------
+@main.route('/dashboard')
+def dashboard():
+    if 'user' not in session:
+        flash("Debes iniciar sesión para acceder a esta página.", "warning")
+        return redirect(url_for('main.login'))
+
+    user_id = session['user']['id']
+    user_data = db.collection('usuarios').document(user_id).get()
+
+    if not user_data.exists:
+        flash("No se encontraron datos del usuario.", "danger")
+        return redirect(url_for('main.logout'))
+
+    return render_template('dashboard.html', user=user_data.to_dict())
+
+
+# ------------------- LOGOUT -------------------
+@main.route('/logout')
+def logout():
+    session.pop('user', None)
+    flash("Sesión cerrada correctamente.", "success")
+    return redirect(url_for('main.home'))
