@@ -2,36 +2,37 @@
 {% block title %}Registro - PlayTimeUY{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col lg:flex-row">
+<div class="min-h-screen bg-gradient-to-br from-fuchsia-900 via-purple-900 to-black flex items-center justify-center p-6">
 
-  <!-- Panel de bienvenida -->
-  <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-fuchsia-700 via-purple-800 to-indigo-900 items-center justify-center p-12 text-white">
-    <div class="max-w-md space-y-6 animate-fadeInLeft text-center">
-      <h1 class="text-5xl font-extrabold leading-tight">
-        ¡Bienvenido a <span class="text-fuchsia-400">PlayTimeUY</span>!
-      </h1>
-      <img src="{{ url_for('static', filename='img/Registro.png') }}" alt="PlayTimeUY" class="w-48 mx-auto drop-shadow-lg">
+  <div class="flex flex-col lg:flex-row w-full max-w-6xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(236,72,153,0.4)] animate-fadeIn">
+
+    <!-- Panel Izquierdo -->
+    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-700 items-center justify-center relative">
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-md rounded-l-3xl"></div>
+      <div class="z-10 text-center p-8">
+        <img src="{{ url_for('static', filename='img/Registro.png') }}" class="w-64 mx-auto mb-8 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+        <h1 class="text-5xl font-extrabold text-white tracking-tight">PlayTimeUY</h1>
+        <p class="text-lg text-white/90 mt-4 max-w-md mx-auto leading-relaxed">
+          Tu espacio para mostrarte al mundo y quedarte con el <span class="font-bold text-pink-300">100%</span> de tus ganancias.
+        </p>
+      </div>
     </div>
-  </div>
 
-  <!-- Formulario -->
-  <div class="flex-1 flex items-center justify-center p-6 lg:p-12">
-    <div class="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl p-8 w-full max-w-lg text-white animate-fadeInUp">
-
-      <h2 class="text-3xl font-bold mb-6 text-center">
-        Crear cuenta
-      </h2>
+    <!-- Formulario -->
+    <div class="flex-1 bg-white/5 backdrop-blur-2xl border-l border-white/20 p-8 md:p-12 text-white">
+      <h2 class="text-4xl font-extrabold text-center text-pink-400 mb-4 drop-shadow-lg">Crear cuenta</h2>
+      <p class="text-center text-gray-300 mb-8">Únete a la plataforma que revoluciona la forma de ganar online</p>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          <div class="mb-6 space-y-3" role="alert">
+          <div class="space-y-3" role="alert">
             {% for category, message in messages %}
-              <div class="text-sm px-5 py-3 rounded-lg font-medium
+              <div class="px-4 py-3 rounded-lg text-sm font-medium
                 {% if category == 'danger' %}
-                  bg-red-600/90 text-red-100 shadow-md
+                  bg-red-600/80 text-red-100
                 {% else %}
-                  bg-green-600/90 text-green-100 shadow-md
-                {% endif %}">
+                  bg-green-600/80 text-green-100
+                {% endif %} animate-slideIn">
                 {{ message }}
               </div>
             {% endfor %}
@@ -39,74 +40,103 @@
         {% endif %}
       {% endwith %}
 
-      <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-5" id="registroForm" novalidate>
-        <input type="text" name="full_name" placeholder="Nombre completo" required autocomplete="name" class="input-field col-span-2">
-        <input type="text" name="username" placeholder="Nombre de usuario" required autocomplete="username" class="input-field">
-        <input type="email" id="email" name="email" placeholder="Correo electrónico" required autocomplete="email" class="input-field">
+      <form method="POST" class="space-y-5" id="registroForm" novalidate>
 
-        <div class="relative">
-          <input type="password" id="password" name="password" placeholder="Contraseña" required autocomplete="new-password" class="input-field pr-12">
-          <button type="button" data-toggle="password" class="toggle-btn">👁️</button>
+        <!-- Nombre completo -->
+        <div class="group relative animate-fadeUp" style="animation-delay:0.1s">
+          <i class="fas fa-user absolute top-3 left-4 text-pink-400"></i>
+          <input type="text" name="full_name" placeholder="Nombre completo" required class="input-field pl-12">
         </div>
 
-        <div class="relative">
-          <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmar contraseña" required autocomplete="new-password" class="input-field pr-12">
-          <button type="button" data-toggle="confirm_password" class="toggle-btn">👁️</button>
+        <!-- Usuario -->
+        <div class="group relative animate-fadeUp" style="animation-delay:0.2s">
+          <i class="fas fa-at absolute top-3 left-4 text-pink-400"></i>
+          <input type="text" name="username" placeholder="Nombre de usuario" required class="input-field pl-12">
         </div>
 
-        <input type="date" name="dob" required class="input-field">
-        <input type="text" name="country" placeholder="País" required class="input-field">
-        <input type="text" name="twitter" placeholder="Twitter (opcional)" class="input-field">
-        <input type="text" name="instagram" placeholder="Instagram (opcional)" class="input-field">
+        <!-- Email -->
+        <div class="group relative animate-fadeUp" style="animation-delay:0.3s">
+          <i class="fas fa-envelope absolute top-3 left-4 text-pink-400"></i>
+          <input type="email" name="email" placeholder="Correo electrónico" required class="input-field pl-12">
+        </div>
 
-        <select name="role" required class="input-field col-span-2">
-          <option value="" disabled selected>Selecciona tu rol</option>
-          <option value="creator">Creador/a</option>
-          <option value="buyer">Comprador/a</option>
-          <option value="promoter">Promotor/a</option>
-        </select>
+        <!-- Contraseña -->
+        <div class="group relative animate-fadeUp" style="animation-delay:0.4s">
+          <i class="fas fa-lock absolute top-3 left-4 text-pink-400"></i>
+          <input type="password" name="password" placeholder="Contraseña" required class="input-field pl-12">
+        </div>
 
-        <button type="submit" class="col-span-2 btn-gradient">
-          Registrarme
-        </button>
+        <!-- Confirmar contraseña -->
+        <div class="group relative animate-fadeUp" style="animation-delay:0.5s">
+          <i class="fas fa-lock absolute top-3 left-4 text-pink-400"></i>
+          <input type="password" name="confirm_password" placeholder="Confirmar contraseña" required class="input-field pl-12">
+        </div>
+
+        <!-- Fecha y país -->
+        <div class="grid grid-cols-2 gap-4 animate-fadeUp" style="animation-delay:0.6s">
+          <input type="date" name="dob" required class="input-field">
+          <input type="text" name="country" placeholder="País" required class="input-field">
+        </div>
+
+        <!-- Redes -->
+        <div class="grid grid-cols-2 gap-4 animate-fadeUp" style="animation-delay:0.7s">
+          <input type="text" name="twitter" placeholder="Twitter (opcional)" class="input-field">
+          <input type="text" name="instagram" placeholder="Instagram (opcional)" class="input-field">
+        </div>
+
+        <!-- Rol -->
+        <div class="animate-fadeUp" style="animation-delay:0.8s">
+          <select name="role" required class="input-field">
+            <option value="" disabled selected>Selecciona tu rol</option>
+            <option value="creator">Creador/a</option>
+            <option value="buyer">Comprador/a</option>
+            <option value="promoter">Promotor/a</option>
+          </select>
+        </div>
+
+        <!-- Botón -->
+        <div class="animate-fadeUp" style="animation-delay:0.9s">
+          <button type="submit" class="btn-gradient w-full py-3 text-lg font-bold rounded-2xl tracking-wide">
+            Registrarme
+          </button>
+        </div>
       </form>
 
       <p class="mt-6 text-center text-sm text-gray-300">
         ¿Ya tenés cuenta?
-        <a href="{{ url_for('main.login') }}" class="underline text-fuchsia-400 hover:text-white transition">Iniciar sesión</a>
+        <a href="{{ url_for('main.login') }}" class="underline text-pink-400 hover:text-white transition">Iniciar sesión</a>
       </p>
     </div>
   </div>
 </div>
 
 <style>
-  @keyframes fadeInUp {
-    0% {opacity:0; transform:translateY(20px);}
-    100% {opacity:1; transform:translateY(0);}
-  }
-  @keyframes fadeInLeft {
-    0% {opacity:0; transform:translateX(-20px);}
-    100% {opacity:1; transform:translateX(0);}
-  }
-  .animate-fadeInUp { animation: fadeInUp .7s ease-out forwards; }
-  .animate-fadeInLeft { animation: fadeInLeft .7s ease-out forwards; }
+@keyframes fadeIn {0% {opacity:0; transform:translateY(20px);} 100% {opacity:1; transform:translateY(0);}}
+@keyframes fadeUp {0% {opacity:0; transform:translateY(15px);} 100% {opacity:1; transform:translateY(0);}}
+@keyframes slideIn {0% {opacity:0; transform:translateX(-20px);} 100% {opacity:1; transform:translateX(0);}}
 
-  .input-field {
-    @apply w-full px-4 py-3 rounded-lg bg-white/15 border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition;
-  }
-  .toggle-btn {
-    @apply absolute top-3 right-3 text-white hover:text-fuchsia-400 transition text-xl select-none;
-  }
-  .btn-gradient {
-    @apply w-full py-3 rounded-xl font-semibold text-white transition shadow-lg;
-    background: linear-gradient(90deg, #d946ef, #9333ea);
-    box-shadow: 0 4px 15px rgba(217,70,239,0.4);
-  }
-  .btn-gradient:hover {
-    background: linear-gradient(90deg, #e879f9, #a855f7);
-    box-shadow: 0 6px 20px rgba(217,70,239,0.6);
-  }
+.animate-fadeIn { animation: fadeIn .8s ease-out forwards; }
+.animate-fadeUp { animation: fadeUp .6s ease-out forwards; }
+.animate-slideIn { animation: slideIn .5s ease-out forwards; }
+
+.input-field {
+  @apply w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 
+         text-white placeholder-gray-300 focus:outline-none focus:ring-2 
+         focus:ring-pink-500 focus:bg-white/20 transition duration-300 ease-in-out shadow-lg;
+}
+.input-field:focus { box-shadow: 0 0 15px rgba(236,72,153,0.6); }
+
+.btn-gradient {
+  background: linear-gradient(90deg, #ec4899, #d946ef, #9333ea);
+  box-shadow: 0 8px 25px rgba(217,70,239,0.5);
+  transition: all 0.3s ease;
+}
+.btn-gradient:hover {
+  background: linear-gradient(90deg, #f472b6, #e879f9, #a855f7);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(217,70,239,0.7);
+}
 </style>
 
-<script src="{{ url_for('static', filename='js/registro.js') }}"></script>
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 {% endblock %}

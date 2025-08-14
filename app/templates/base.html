@@ -2,50 +2,168 @@
 <html lang="es" class="scroll-smooth antialiased">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}PlayTimeUY{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>{% block title %}PlayTimeUY - Contenido Premium{% endblock %}</title>
+
+  <!-- SEO -->
+  <meta name="description" content="PlayTimeUY: Plataforma premium para creadoras de contenido. Sin comisiones ocultas, diseño moderno y experiencia profesional.">
+  <meta name="author" content="PlayTimeUY">
+  <meta name="theme-color" content="#ec4899">
+  <link rel="canonical" href="{{ request.url if request else '/' }}" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="PlayTimeUY - Contenido Premium">
+  <meta property="og:description" content="Crea, comparte y gana con la plataforma más moderna y segura para creadoras de contenido.">
+  <meta property="og:url" content="{{ request.url if request else '/' }}">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/static/img/og-banner.jpg">
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PlayTimeUY - Contenido Premium">
+  <meta name="twitter:description" content="Crea, comparte y gana con la plataforma más moderna y segura para creadoras de contenido.">
+  <meta name="twitter:image" content="/static/img/og-banner.jpg">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
+        container: { center: true, padding: '1rem' },
         extend: {
-          fontFamily: { sans: ['Poppins', 'sans-serif'] },
+          fontFamily: { sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
           colors: {
             primary: '#ec4899',
-            secondary: '#0f172a',
-            dark: '#0e0e10',
+            secondary: '#111827',
+            dark: '#0b0c10',
+            accent: '#a855f7'
           },
-        },
-      },
-    };
+          boxShadow: {
+            glow: '0 0 25px rgba(236,72,153,0.35)',
+            card: '0 10px 35px rgba(0,0,0,0.45)'
+          }
+        }
+      }
+    }
   </script>
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+  <!-- Favicon -->
+  <link rel="icon" href="/static/img/favicon.png" type="image/png">
 
-  <!-- Meta SEO opcionales -->
-  <meta name="description" content="PlayTimeUY - Plataforma para creadoras uruguayas sin comisiones ocultas.">
-  <meta name="author" content="PlayTimeUY">
-  <meta name="theme-color" content="#ec4899">
+  <style>
+    /* Fondo sutil con patrón */
+    body {
+      background:
+        radial-gradient(60rem 60rem at 120% -10%, rgba(168,85,247,.16), transparent 70%),
+        radial-gradient(60rem 60rem at -20% 120%, rgba(236,72,153,.14), transparent 70%),
+        #0b0c10;
+    }
+
+    /* Loader */
+    .pt-loader {
+      position: fixed; inset: 0;
+      display: grid; place-items: center;
+      background: rgba(10, 10, 12, 0.96);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+    .pt-ring {
+      width: 96px; height: 96px; border-radius: 9999px;
+      background: conic-gradient(from 0deg,
+        #ec4899, #d946ef, #9333ea, #ec4899);
+      mask: radial-gradient(farthest-side,#0000 calc(100% - 12px), #000 0);
+      -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 12px), #000 0);
+      animation: spin 1.2s linear infinite;
+      box-shadow: 0 0 45px rgba(236,72,153,.35), inset 0 0 25px rgba(0,0,0,.4);
+    }
+    .pt-wordmark {
+      position: absolute; text-align: center; line-height: 1;
+      font-weight: 800; letter-spacing: .5px;
+      text-transform: none; color: #fff;
+      filter: drop-shadow(0 6px 18px rgba(236,72,153,.45));
+      animation: glow 2.2s ease-in-out infinite;
+    }
+    .pt-wordmark span { display:block; font-weight:600; opacity:.9; font-size:.85rem; margin-top:.25rem }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    @keyframes glow {
+      0%,100% { text-shadow: 0 0 0 rgba(236,72,153,.0) }
+      50%     { text-shadow: 0 0 16px rgba(236,72,153,.75) }
+    }
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce) {
+      .pt-ring { animation: none }
+      .pt-wordmark { animation: none }
+    }
+
+    /* Mejoras de foco accesible */
+    :focus-visible {
+      outline: 2px solid #ec4899;
+      outline-offset: 2px;
+    }
+  </style>
 </head>
 
-<body class="bg-black text-white font-sans overflow-x-hidden">
-  
+<body class="text-white font-sans overflow-x-hidden selection:bg-primary/20 selection:text-white">
+  <!-- Loader (HTML/CSS puro) -->
+  <div id="loader" class="pt-loader" role="status" aria-live="polite" aria-label="Cargando PlayTimeUY">
+    <div class="relative">
+      <div class="pt-ring"></div>
+      <div class="pt-wordmark -translate-y-1/2 left-1/2 top-1/2 absolute" style="transform: translate(-50%,-50%);">
+        <div style="font-size:1.35rem">PlayTime<span style="color:#ec4899">UY</span></div>
+        <span>cargando…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje si no hay JS -->
+  <noscript>
+    <div class="fixed inset-x-0 top-0 z-[1001] bg-pink-600 text-white text-center py-2">
+      Habilitá JavaScript para la mejor experiencia en PlayTimeUY.
+    </div>
+  </noscript>
+
   <!-- Navbar -->
   {% include 'navbar.html' %}
 
-  <!-- Banner opcional (video o imagen) -->
+  <!-- Banner -->
   {% block banner %}{% endblock %}
 
-  <!-- Contenido principal -->
-  <main>
+  <!-- Contenido -->
+  <main class="min-h-screen">
     {% block content %}{% endblock %}
   </main>
 
   <!-- Footer -->
   {% include 'footer.html' %}
 
+  <!-- Scripts -->
+  <script>
+    // Oculta el loader cuando el contenido termina de cargar
+    (function() {
+      const MIN_VISIBLE = 350; // ms para evitar parpadeos
+      const start = Date.now();
+      const hide = () => {
+        const elapsed = Date.now() - start;
+        const wait = Math.max(0, MIN_VISIBLE - elapsed);
+        setTimeout(() => {
+          const el = document.getElementById('loader');
+          if (!el) return;
+          el.style.opacity = '0';
+          el.style.transition = 'opacity .35s ease';
+          el.addEventListener('transitionend', () => el.remove(), { once: true });
+        }, wait);
+      };
+      // Cubre la mayoría de los casos
+      if (document.readyState === 'complete') hide();
+      else window.addEventListener('load', hide);
+    })();
+  </script>
+
+  <script src="/static/js/base.js"></script>
 </body>
 </html>

@@ -1,10 +1,11 @@
 <!-- app/templates/navbar.html -->
-<nav class="backdrop-blur-md bg-gray-900/80 shadow-lg sticky top-0 z-50 border-b border-gray-800">
-  <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+<nav class="backdrop-blur-xl bg-gray-900/80 shadow-xl sticky top-0 z-50 border-b border-gray-800 transition-all duration-500">
+  <div class="container mx-auto px-6 py-3 flex items-center justify-between">
 
     <!-- Logo -->
     <a href="{{ url_for('main.index') }}" 
-       class="text-2xl font-extrabold tracking-tight text-white hover:text-pink-500 transition">
+       class="text-2xl font-extrabold tracking-tight text-white hover:text-pink-500 transition-all duration-500 flex items-center gap-2">
+      <span class="inline-block transform hover:rotate-12 hover:scale-125 transition-transform duration-500">🎯</span>
       PlayTime<span class="text-pink-500">UY</span>
     </a>
 
@@ -12,39 +13,39 @@
     <ul class="hidden md:flex space-x-6 font-medium text-gray-300 items-center">
       <li>
         <a href="{{ url_for('main.index') }}"
-           class="hover:text-white transition-colors duration-200 {% if request.endpoint == 'main.index' %}text-pink-500{% endif %}">
+           class="nav-link relative px-3 py-1 hover:text-pink-500 transition-colors duration-300 before:absolute before:-bottom-1 before:left-0 before:w-0 before:h-0.5 before:bg-pink-500 before:transition-all hover:before:w-full {% if request.endpoint == 'main.index' %}text-pink-500 before:w-full{% endif %}">
           Inicio
         </a>
       </li>
       <li>
         <a href="{{ url_for('main.dashboard') }}"
-           class="hover:text-white transition-colors duration-200 {% if request.endpoint == 'main.dashboard' %}text-pink-500{% endif %}">
+           class="nav-link relative px-3 py-1 hover:text-pink-500 transition-colors duration-300 before:absolute before:-bottom-1 before:left-0 before:w-0 before:h-0.5 before:bg-pink-500 before:transition-all hover:before:w-full {% if request.endpoint == 'main.dashboard' %}text-pink-500 before:w-full{% endif %}">
           Explorar
         </a>
       </li>
       {% if session.get('user') %}
         <li>
-          <a href="{{ url_for('main.dashboard') }}"
-             class="hover:text-white transition-colors duration-200">
+          <a href="{{ url_for('main.dashboard') }}" 
+             class="nav-link px-3 py-1 text-white bg-pink-500 hover:bg-pink-600 rounded-lg transition-all duration-300 shadow-lg">
             Dashboard
           </a>
         </li>
         <li>
-          <a href="{{ url_for('main.logout') }}"
-             class="hover:text-pink-500 transition-colors duration-200">
+          <a href="{{ url_for('main.logout') }}" 
+             class="nav-link px-3 py-1 text-white hover:text-red-400 transition-all duration-300">
             Cerrar sesión
           </a>
         </li>
       {% else %}
         <li>
-          <a href="{{ url_for('main.login') }}"
-             class="bg-gradient-to-r from-pink-500 to-purple-500 px-5 py-2 rounded-full shadow-md hover:shadow-pink-500/50 hover:scale-105 transition transform text-white">
+          <a href="{{ url_for('main.login') }}" 
+             class="btn-primary bg-gradient-to-r from-pink-500 to-pink-700 text-white px-5 py-2 rounded-lg shadow-lg hover:scale-105 transform transition-all duration-300">
             Ingresar
           </a>
         </li>
         <li>
-          <a href="{{ url_for('main.register') }}"
-             class="border border-pink-500 px-5 py-2 rounded-full text-pink-500 hover:bg-pink-500 hover:text-white hover:scale-105 transition transform">
+          <a href="{{ url_for('main.register') }}" 
+             class="btn-outline border border-pink-500 text-pink-500 px-5 py-2 rounded-lg hover:bg-pink-500 hover:text-white transition-all duration-300">
             Registrarse
           </a>
         </li>
@@ -53,80 +54,27 @@
 
     <!-- Botón menú móvil -->
     <button id="btn-mobile-menu" 
-            class="md:hidden focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition"
-            aria-label="Toggle menu" aria-expanded="false">
-      <svg class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            class="md:hidden focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-all duration-300"
+            aria-label="Abrir menú" aria-expanded="false">
+      <svg id="menu-icon" class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 6h16M4 12h16M4 18h16"></path>
       </svg>
     </button>
   </div>
 
   <!-- Menú móvil -->
-  <div id="mobile-menu" class="hidden md:hidden bg-gray-900/95 px-4 py-4 border-t border-gray-800 animate-fadeIn">
-    <ul class="space-y-3 font-medium text-gray-300">
-      <li>
-        <a href="{{ url_for('main.index') }}"
-           class="block hover:text-white transition-colors duration-200 {% if request.endpoint == 'main.index' %}text-pink-500{% endif %}">
-          Inicio
-        </a>
-      </li>
-      <li>
-        <a href="{{ url_for('main.dashboard') }}"
-           class="block hover:text-white transition-colors duration-200 {% if request.endpoint == 'main.dashboard' %}text-pink-500{% endif %}">
-          Explorar
-        </a>
-      </li>
+  <div id="mobile-menu" class="hidden md:hidden bg-gray-900/95 px-6 py-6 border-t border-gray-800 animate-fadeIn">
+    <ul class="space-y-4 font-medium text-gray-300">
+      <li><a href="{{ url_for('main.index') }}" class="mobile-link block px-4 py-2 rounded-lg hover:bg-pink-500 hover:text-white transition-all duration-300 {% if request.endpoint == 'main.index' %}bg-pink-500 text-white{% endif %}">Inicio</a></li>
+      <li><a href="{{ url_for('main.dashboard') }}" class="mobile-link block px-4 py-2 rounded-lg hover:bg-pink-500 hover:text-white transition-all duration-300 {% if request.endpoint == 'main.dashboard' %}bg-pink-500 text-white{% endif %}">Explorar</a></li>
       {% if session.get('user') %}
-        <li>
-          <a href="{{ url_for('main.dashboard') }}"
-             class="block hover:text-white transition-colors duration-200">
-            Dashboard
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('main.logout') }}"
-             class="block hover:text-pink-500 transition-colors duration-200">
-            Cerrar sesión
-          </a>
-        </li>
+        <li><a href="{{ url_for('main.dashboard') }}" class="mobile-link block px-4 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 transition-all duration-300">Dashboard</a></li>
+        <li><a href="{{ url_for('main.logout') }}" class="mobile-link block px-4 py-2 rounded-lg hover:text-red-400 transition-all duration-300">Cerrar sesión</a></li>
       {% else %}
-        <li>
-          <a href="{{ url_for('main.login') }}"
-             class="block text-center bg-gradient-to-r from-pink-500 to-purple-500 px-5 py-2 rounded-full shadow-md hover:shadow-pink-500/50 hover:scale-105 transition transform text-white">
-            Ingresar
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('main.register') }}"
-             class="block text-center border border-pink-500 px-5 py-2 rounded-full text-pink-500 hover:bg-pink-500 hover:text-white hover:scale-105 transition transform">
-            Registrarse
-          </a>
-        </li>
+        <li><a href="{{ url_for('main.login') }}" class="btn-primary block text-center bg-gradient-to-r from-pink-500 to-pink-700 text-white px-5 py-2 rounded-lg shadow-lg hover:scale-105 transform transition-all duration-300">Ingresar</a></li>
+        <li><a href="{{ url_for('main.register') }}" class="btn-outline block text-center border border-pink-500 text-pink-500 px-5 py-2 rounded-lg hover:bg-pink-500 hover:text-white transition-all duration-300">Registrarse</a></li>
       {% endif %}
     </ul>
   </div>
-
-  <!-- Script toggle menú móvil con animación -->
-  <script>
-    const btnMobileMenu = document.getElementById('btn-mobile-menu');
-    const mobileMenu = document.getElementById('mobile-menu');
-
-    btnMobileMenu.addEventListener('click', () => {
-      const expanded = btnMobileMenu.getAttribute('aria-expanded') === 'true';
-      btnMobileMenu.setAttribute('aria-expanded', !expanded);
-      mobileMenu.classList.toggle('hidden');
-      mobileMenu.classList.toggle('animate-fadeIn');
-    });
-  </script>
-
-  <!-- Animaciones Tailwind personalizadas -->
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeIn {
-      animation: fadeIn 0.25s ease-in-out;
-    }
-  </style>
 </nav>
