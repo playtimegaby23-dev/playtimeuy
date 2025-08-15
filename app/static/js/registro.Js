@@ -1,20 +1,10 @@
 // registro.js
+import { auth, db } from "./firebase-config.js";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("registroForm");
-
-    // Inicializar Firebase
-    const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "TU_AUTH_DOMAIN",
-        projectId: "TU_PROJECT_ID",
-        storageBucket: "TU_STORAGE_BUCKET",
-        messagingSenderId: "TU_MESSAGING_SENDER_ID",
-        appId: "TU_APP_ID"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
 
     // Mostrar/ocultar contraseñas
     document.querySelectorAll("[data-toggle]").forEach(btn => {
@@ -28,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Validación en tiempo real
+    // Inputs y validaciones
     const emailInput = document.getElementById("email");
     const passInput = document.getElementById("password");
     const confirmInput = document.getElementById("confirm_password");
@@ -43,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const email = emailInput.value.trim();
         const password = passInput.value.trim();
-        const confirmPassword = confirmInput.value.trim();
 
         if (!validateEmail(emailInput) || !validatePassword(passInput) || !validateConfirmPassword(passInput, confirmInput)) {
             Swal.fire("Error", "Por favor corrige los errores antes de continuar.", "error");
@@ -59,20 +48,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 didOpen: () => Swal.showLoading()
             });
 
-            // Crear usuario en Firebase Auth
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            // Crear usuario en Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // Guardar datos extra en Firestore
-            await db.collection("usuarios").doc(user.uid).set({
-                email: email,
-                creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+            // Guardar datos en Firestore
+            await setDoc(doc(db, "usuarios", user.uid), {
+                email,
+                creadoEn: serverTimestamp()
             });
 
             Swal.fire("¡Registro exitoso!", "Tu cuenta ha sido creada correctamente.", "success")
                 .then(() => window.location.href = "/inicio");
 
         } catch (error) {
+            console.error("Error al registrar usuario:", error);
             Swal.fire("Error", error.message, "error");
         }
     });
