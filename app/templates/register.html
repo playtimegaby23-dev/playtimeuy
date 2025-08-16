@@ -4,13 +4,13 @@
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-fuchsia-900 via-purple-900 to-black flex items-center justify-center p-6">
 
-  <div class="flex flex-col lg:flex-row w-full max-w-6xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(236,72,153,0.4)] animate-fadeIn">
+  <div class="flex flex-col lg:flex-row w-full max-w-6xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_60px_rgba(236,72,153,0.4)] animate-fadeIn">
 
     <!-- Panel Izquierdo -->
     <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-700 items-center justify-center relative">
       <div class="absolute inset-0 bg-black/40 backdrop-blur-md rounded-l-3xl"></div>
       <div class="z-10 text-center p-8">
-        <img src="{{ url_for('static', filename='img/Registro.png') }}" class="w-64 mx-auto mb-8 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+        <img src="{{ url_for('static', filename='img/Registro.png') }}" class="w-64 mx-auto mb-8 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)]">
         <h1 class="text-5xl font-extrabold text-white tracking-tight">PlayTimeUY</h1>
         <p class="text-lg text-white/90 mt-4 max-w-md mx-auto leading-relaxed">
           Tu espacio para mostrarte al mundo y quedarte con el <span class="font-bold text-pink-300">100%</span> de tus ganancias.
@@ -40,53 +40,81 @@
         {% endif %}
       {% endwith %}
 
-      <form method="POST" class="space-y-5" id="registroForm" novalidate>
+      <form method="POST" class="space-y-6" id="registroForm" novalidate>
 
         <!-- Nombre completo -->
-        <div class="group relative animate-fadeUp" style="animation-delay:0.1s">
-          <i class="fas fa-user absolute top-3 left-4 text-pink-400"></i>
-          <input type="text" name="full_name" placeholder="Nombre completo" required class="input-field pl-12">
+        <div class="relative group animate-fadeUp" style="animation-delay:0.1s">
+          <label class="block text-sm text-gray-300 mb-1">Nombre completo</label>
+          <div class="relative">
+            <i class="fas fa-user absolute top-3 left-4 text-pink-400 group-focus-within:text-white transition"></i>
+            <input type="text" name="full_name" placeholder="Ej: Juan Pérez" required class="input-modern pl-12">
+          </div>
         </div>
 
         <!-- Usuario -->
-        <div class="group relative animate-fadeUp" style="animation-delay:0.2s">
-          <i class="fas fa-at absolute top-3 left-4 text-pink-400"></i>
-          <input type="text" name="username" placeholder="Nombre de usuario" required class="input-field pl-12">
+        <div class="relative group animate-fadeUp" style="animation-delay:0.2s">
+          <label class="block text-sm text-gray-300 mb-1">Nombre de usuario</label>
+          <div class="relative">
+            <i class="fas fa-at absolute top-3 left-4 text-pink-400 group-focus-within:text-white transition"></i>
+            <input type="text" name="username" placeholder="Tu usuario" required class="input-modern pl-12">
+          </div>
         </div>
 
         <!-- Email -->
-        <div class="group relative animate-fadeUp" style="animation-delay:0.3s">
-          <i class="fas fa-envelope absolute top-3 left-4 text-pink-400"></i>
-          <input type="email" name="email" placeholder="Correo electrónico" required class="input-field pl-12">
+        <div class="relative group animate-fadeUp" style="animation-delay:0.3s">
+          <label class="block text-sm text-gray-300 mb-1">Correo electrónico</label>
+          <div class="relative">
+            <i class="fas fa-envelope absolute top-3 left-4 text-pink-400 group-focus-within:text-white transition"></i>
+            <input type="email" name="email" placeholder="correo@ejemplo.com" required class="input-modern pl-12">
+          </div>
         </div>
 
         <!-- Contraseña -->
-        <div class="group relative animate-fadeUp" style="animation-delay:0.4s">
-          <i class="fas fa-lock absolute top-3 left-4 text-pink-400"></i>
-          <input type="password" name="password" placeholder="Contraseña" required class="input-field pl-12">
+        <div class="relative group animate-fadeUp" style="animation-delay:0.4s">
+          <label class="block text-sm text-gray-300 mb-1">Contraseña</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute top-3 left-4 text-pink-400 group-focus-within:text-white transition"></i>
+            <input type="password" name="password" placeholder="********" required class="input-modern pl-12">
+          </div>
         </div>
 
         <!-- Confirmar contraseña -->
-        <div class="group relative animate-fadeUp" style="animation-delay:0.5s">
-          <i class="fas fa-lock absolute top-3 left-4 text-pink-400"></i>
-          <input type="password" name="confirm_password" placeholder="Confirmar contraseña" required class="input-field pl-12">
+        <div class="relative group animate-fadeUp" style="animation-delay:0.5s">
+          <label class="block text-sm text-gray-300 mb-1">Confirmar contraseña</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute top-3 left-4 text-pink-400 group-focus-within:text-white transition"></i>
+            <input type="password" name="confirm_password" placeholder="********" required class="input-modern pl-12">
+          </div>
         </div>
 
         <!-- Fecha y país -->
-        <div class="grid grid-cols-2 gap-4 animate-fadeUp" style="animation-delay:0.6s">
-          <input type="date" name="dob" required class="input-field">
-          <input type="text" name="country" placeholder="País" required class="input-field">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeUp" style="animation-delay:0.6s">
+          <div>
+            <label class="block text-sm text-gray-300 mb-1">Fecha de nacimiento</label>
+            <input type="date" name="dob" required class="input-modern">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-300 mb-1">País</label>
+            <input type="text" name="country" placeholder="Ej: Uruguay" required class="input-modern">
+          </div>
         </div>
 
         <!-- Redes -->
-        <div class="grid grid-cols-2 gap-4 animate-fadeUp" style="animation-delay:0.7s">
-          <input type="text" name="twitter" placeholder="Twitter (opcional)" class="input-field">
-          <input type="text" name="instagram" placeholder="Instagram (opcional)" class="input-field">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeUp" style="animation-delay:0.7s">
+          <div>
+            <label class="block text-sm text-gray-300 mb-1">Twitter (opcional)</label>
+            <input type="text" name="twitter" placeholder="@usuario" class="input-modern">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-300 mb-1">Instagram (opcional)</label>
+            <input type="text" name="instagram" placeholder="@usuario" class="input-modern">
+          </div>
         </div>
 
         <!-- Rol -->
         <div class="animate-fadeUp" style="animation-delay:0.8s">
-          <select name="role" required class="input-field">
+          <label class="block text-sm text-gray-300 mb-1">Selecciona tu rol</label>
+          <select name="role" required class="input-modern">
             <option value="" disabled selected>Selecciona tu rol</option>
             <option value="creator">Creador/a</option>
             <option value="buyer">Comprador/a</option>
@@ -96,7 +124,7 @@
 
         <!-- Botón -->
         <div class="animate-fadeUp" style="animation-delay:0.9s">
-          <button type="submit" class="btn-gradient w-full py-3 text-lg font-bold rounded-2xl tracking-wide">
+          <button type="submit" class="btn-3d w-full py-3 text-lg font-bold rounded-2xl tracking-wide">
             Registrarme
           </button>
         </div>
@@ -111,6 +139,7 @@
 </div>
 
 <style>
+/* Animaciones */
 @keyframes fadeIn {0% {opacity:0; transform:translateY(20px);} 100% {opacity:1; transform:translateY(0);}}
 @keyframes fadeUp {0% {opacity:0; transform:translateY(15px);} 100% {opacity:1; transform:translateY(0);}}
 @keyframes slideIn {0% {opacity:0; transform:translateX(-20px);} 100% {opacity:1; transform:translateX(0);}}
@@ -119,22 +148,32 @@
 .animate-fadeUp { animation: fadeUp .6s ease-out forwards; }
 .animate-slideIn { animation: slideIn .5s ease-out forwards; }
 
-.input-field {
-  @apply w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 
-         text-white placeholder-gray-300 focus:outline-none focus:ring-2 
-         focus:ring-pink-500 focus:bg-white/20 transition duration-300 ease-in-out shadow-lg;
+/* Inputs modernos */
+.input-modern {
+  @apply w-full px-4 py-3 rounded-xl bg-white/10 border border-transparent 
+         text-white placeholder-gray-400 focus:outline-none focus:ring-2 
+         focus:ring-pink-500 transition duration-300 ease-in-out;
+  box-shadow: inset 0 -2px 0 rgba(255,255,255,0.1);
 }
-.input-field:focus { box-shadow: 0 0 15px rgba(236,72,153,0.6); }
+.input-modern:focus {
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 0 15px rgba(236,72,153,0.6), inset 0 -2px 0 #ec4899;
+}
 
-.btn-gradient {
+/* Botón 3D */
+.btn-3d {
   background: linear-gradient(90deg, #ec4899, #d946ef, #9333ea);
-  box-shadow: 0 8px 25px rgba(217,70,239,0.5);
+  box-shadow: 0 6px 15px rgba(217,70,239,0.5), inset 0 -3px 0 rgba(0,0,0,0.2);
   transition: all 0.3s ease;
 }
-.btn-gradient:hover {
-  background: linear-gradient(90deg, #f472b6, #e879f9, #a855f7);
+.btn-3d:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(217,70,239,0.7);
+  background: linear-gradient(90deg, #f472b6, #e879f9, #a855f7);
+  box-shadow: 0 10px 25px rgba(217,70,239,0.7);
+}
+.btn-3d:active {
+  transform: translateY(2px);
+  box-shadow: 0 3px 10px rgba(217,70,239,0.4) inset;
 }
 </style>
 

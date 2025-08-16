@@ -6,23 +6,51 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("registroForm");
 
-    // Mostrar/ocultar contraseñas
-    document.querySelectorAll("[data-toggle]").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-toggle");
-            const input = document.getElementById(id);
-            if (input) {
-                input.type = input.type === "password" ? "text" : "password";
-                btn.classList.toggle("text-primary");
-            }
-        });
-    });
+    // Inputs
+    const emailInput = form.querySelector("input[name='email']");
+    const passInput = form.querySelector("input[name='password']");
+    const confirmInput = form.querySelector("input[name='confirm_password']");
+    const fullNameInput = form.querySelector("input[name='full_name']");
+    const usernameInput = form.querySelector("input[name='username']");
+    const dobInput = form.querySelector("input[name='dob']");
+    const countryInput = form.querySelector("input[name='country']");
+    const twitterInput = form.querySelector("input[name='twitter']");
+    const instagramInput = form.querySelector("input[name='instagram']");
+    const roleInput = form.querySelector("select[name='role']");
 
-    // Inputs y validaciones
-    const emailInput = document.getElementById("email");
-    const passInput = document.getElementById("password");
-    const confirmInput = document.getElementById("confirm_password");
+    // Animación de error
+    function animateError(input) {
+        input.classList.add("border-red-500", "animate-shake");
+        setTimeout(() => input.classList.remove("animate-shake"), 400);
+    }
 
+    // Validaciones
+    function validateEmail(input) {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        if (!emailPattern.test(input.value.trim())) {
+            animateError(input);
+            return false;
+        }
+        return true;
+    }
+
+    function validatePassword(input) {
+        if (input.value.trim().length < 6) {
+            animateError(input);
+            return false;
+        }
+        return true;
+    }
+
+    function validateConfirmPassword(passInput, confirmInput) {
+        if (confirmInput.value.trim() !== passInput.value.trim()) {
+            animateError(confirmInput);
+            return false;
+        }
+        return true;
+    }
+
+    // Validación en tiempo real
     emailInput.addEventListener("input", () => validateEmail(emailInput));
     passInput.addEventListener("input", () => validatePassword(passInput));
     confirmInput.addEventListener("input", () => validateConfirmPassword(passInput, confirmInput));
@@ -31,68 +59,77 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const email = emailInput.value.trim();
-        const password = passInput.value.trim();
-
-        if (!validateEmail(emailInput) || !validatePassword(passInput) || !validateConfirmPassword(passInput, confirmInput)) {
+        if (
+            !validateEmail(emailInput) ||
+            !validatePassword(passInput) ||
+            !validateConfirmPassword(passInput, confirmInput)
+        ) {
             Swal.fire("Error", "Por favor corrige los errores antes de continuar.", "error");
             return;
         }
 
         try {
-            // Animación de carga
             Swal.fire({
-                title: "Registrando...",
-                text: "Por favor espera",
+                title: "Creando tu cuenta...",
+                text: "Estamos registrando tus datos",
                 allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
+                didOpen: () => Swal.showLoading(),
+                background: "#1f1f2e",
+                color: "#fff"
             });
 
             // Crear usuario en Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
             const user = userCredential.user;
 
             // Guardar datos en Firestore
             await setDoc(doc(db, "usuarios", user.uid), {
-                email,
+                fullName: fullNameInput.value.trim(),
+                username: usernameInput.value.trim(),
+                email: emailInput.value.trim(),
+                dob: dobInput.value,
+                country: countryInput.value.trim(),
+                twitter: twitterInput.value.trim() || null,
+                instagram: instagramInput.value.trim() || null,
+                role: roleInput.value,
                 creadoEn: serverTimestamp()
             });
 
-            Swal.fire("¡Registro exitoso!", "Tu cuenta ha sido creada correctamente.", "success")
-                .then(() => window.location.href = "/inicio");
+            Swal.fire({
+                icon: "success",
+                title: "¡Registro exitoso!",
+                text: "Tu cuenta ha sido creada correctamente.",
+                background: "#1f1f2e",
+                color: "#fff",
+                confirmButtonColor: "#ec4899"
+            }).then(() => {
+                window.location.href = "/inicio";
+            });
 
         } catch (error) {
             console.error("Error al registrar usuario:", error);
-            Swal.fire("Error", error.message, "error");
+            Swal.fire({
+                icon: "error",
+                title: "Error al registrarse",
+                text: error.message,
+                background: "#1f1f2e",
+                color: "#fff",
+                confirmButtonColor: "#ef4444"
+            });
         }
     });
-
-    // Funciones de validación
-    function validateEmail(input) {
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-        if (!emailPattern.test(input.value.trim())) {
-            input.classList.add("border-red-500");
-            return false;
-        }
-        input.classList.remove("border-red-500");
-        return true;
-    }
-
-    function validatePassword(input) {
-        if (input.value.trim().length < 6) {
-            input.classList.add("border-red-500");
-            return false;
-        }
-        input.classList.remove("border-red-500");
-        return true;
-    }
-
-    function validateConfirmPassword(passInput, confirmInput) {
-        if (confirmInput.value.trim() !== passInput.value.trim()) {
-            confirmInput.classList.add("border-red-500");
-            return false;
-        }
-        confirmInput.classList.remove("border-red-500");
-        return true;
-    }
 });
+
+/* Animación Shake */
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.animate-shake {
+  animation: shake 0.4s;
+}
+`;
+document.head.appendChild(style);
