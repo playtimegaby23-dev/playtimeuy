@@ -1,12 +1,17 @@
+"""
+Rutas principales de la aplicación con autenticación:
+- Firebase Admin + Pyrebase (Auth & Firestore)
+- Fallback local con JSON
+- Login/email-password y Google Sign-In
+- Dashboard y perfil de usuario
+"""
+
 import os
 import json
 import uuid
 from pathlib import Path
 from functools import wraps
-from flask import (
-    Blueprint, render_template, request, redirect,
-    url_for, flash, session
-)
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
@@ -14,11 +19,12 @@ load_dotenv()
 
 main = Blueprint("main", __name__)
 
+# ------------------- DIRECTORIOS -------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-# --- Firebase Admin y Firestore ---
+# ------------------- FIREBASE ADMIN & FIRESTORE -------------------
 FIREBASE_ADMIN_AVAILABLE = False
 USE_FIRESTORE = False
 db = None
@@ -40,7 +46,7 @@ try:
 except Exception as e:
     print("[Firebase Admin] No disponible o error en inicialización:", e)
 
-# --- Pyrebase para autenticación ---
+# ------------------- PYREBASE (Autenticación) -------------------
 AUTH_AVAILABLE = False
 firebase_auth = None
 
@@ -64,7 +70,7 @@ try:
 except Exception as e:
     print("[Pyrebase] No disponible:", e)
 
-# --- Manejo local de usuarios (fallback) ---
+# ------------------- FALBACK LOCAL -------------------
 USERS_FILE = DATA_DIR / "users.json"
 if not USERS_FILE.exists():
     USERS_FILE.write_text(json.dumps({}))
@@ -105,7 +111,7 @@ def authenticate_local_user(email, password):
         raise ValueError("Contraseña incorrecta (local).")
     return user
 
-# --- Decoradores ---
+# ------------------- DECORADORES -------------------
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -161,11 +167,12 @@ def get_current_user():
         "is_admin": session.get('is_admin', False)
     }
 
-# --- Rutas ---
+# ------------------- RUTAS -------------------
 @main.route("/")
 def index():
     return render_template("index.html", user=get_current_user())
 
+# ---------- Registro ----------
 @main.route("/register", methods=["GET", "POST"])
 def register():
     if 'user' in session:
@@ -188,29 +195,30 @@ def register():
             flash("La contraseña debe tener al menos 6 caracteres.", "danger")
             return redirect(url_for("main.register"))
 
-        # Intentar registrar en Firebase remoto
+        # Registro remoto Firebase
         if AUTH_AVAILABLE and firebase_auth:
             try:
                 user = firebase_auth.create_user_with_email_and_password(email, password)
-                local_id = user.get('localId')
-                if not local_id:
-                    # Intentar obtener UID de user['localId'] o fallback
-                    local_id = user.get('localId', str(uuid.uuid4()))
+                login_user = firebase_auth.sign_in_with_email_and_password(email, password)
+                firebase_auth.send_email_verification(login_user['idToken'])
+
+                local_id = user.get('localId', str(uuid.uuid4()))
                 if USE_FIRESTORE and db:
                     db.collection("usuarios").document(local_id).set({
                         "full_name": full_name,
                         "username": username,
                         "email": email,
                         "role": "buyer",
-                        "is_admin": False
+                        "is_admin": False,
+                        "verified": False
                     })
-                flash("Registro exitoso. Verifica tu correo si es necesario.", "success")
+                flash("Registro exitoso. Revisa tu correo y verifica tu cuenta antes de iniciar sesión.", "success")
                 return redirect(url_for("main.login"))
             except Exception as e:
                 print("[Firebase Register] Error:", e)
                 flash(f"No se pudo registrar en remoto: {e}", "warning")
 
-        # Registro local fallback
+        # Fallback local
         try:
             create_local_user(email, password, username, full_name)
             flash("Registro local exitoso.", "success")
@@ -220,6 +228,7 @@ def register():
 
     return render_template("register.html")
 
+# ---------- Login ----------
 @main.route("/login", methods=["GET", "POST"])
 def login():
     if 'user' in session:
@@ -233,10 +242,17 @@ def login():
             flash("Email y contraseña son requeridos.", "danger")
             return redirect(url_for("main.login"))
 
-        # Intentar login remoto con Pyrebase
+        # Login remoto Firebase
         if AUTH_AVAILABLE and firebase_auth:
             try:
                 user = firebase_auth.sign_in_with_email_and_password(email, password)
+                info = firebase_auth.get_account_info(user["idToken"])
+                email_verified = info["users"][0]["emailVerified"]
+
+                if not email_verified:
+                    flash("Debes verificar tu correo antes de acceder.", "warning")
+                    return redirect(url_for("main.login"))
+
                 session['user'] = user.get('localId')
                 session['email'] = email
                 flash("Bienvenido/a (remoto).", "success")
@@ -248,6 +264,9 @@ def login():
         # Login local fallback
         try:
             user = authenticate_local_user(email, password)
+            if not user.get("emailVerified", False):
+                flash("Debes verificar tu correo antes de acceder. (local)", "warning")
+                return redirect(url_for("main.login"))
             session['user'] = user["localId"]
             session['email'] = user["email"]
             flash("Bienvenido/a (local).", "success")
@@ -258,9 +277,9 @@ def login():
 
     return render_template("login.html")
 
+# ---------- Google Login ----------
 @main.route("/login/google", methods=["POST"])
 def login_google():
-    from flask import request
     id_token = request.json.get("idToken")
     if not id_token:
         return {"error": "No token provided"}, 400
@@ -279,24 +298,28 @@ def login_google():
         flash("Error autenticando con Google.", "danger")
         return redirect(url_for("main.login"))
 
+# ---------- Dashboard ----------
 @main.route("/dashboard")
 @login_required
 @load_user_data
 def dashboard():
     return render_template("dashboard.html", user=get_current_user())
 
+# ---------- Profile ----------
 @main.route("/profile")
 @login_required
 @load_user_data
 def profile():
     return render_template("profile.html", user=get_current_user())
 
+# ---------- Logout ----------
 @main.route("/logout")
 def logout():
     session.clear()
     flash("Has cerrado sesión.", "success")
     return redirect(url_for("main.login"))
 
+# ------------------- ERRORES -------------------
 @main.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404

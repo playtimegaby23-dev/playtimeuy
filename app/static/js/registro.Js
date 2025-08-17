@@ -5,6 +5,10 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("registroForm");
+    if (!form) {
+        console.error("❌ No se encontró el formulario con id='registroForm'");
+        return;
+    }
 
     // Inputs
     const emailInput = form.querySelector("input[name='email']");
@@ -18,51 +22,56 @@ document.addEventListener("DOMContentLoaded", () => {
     const instagramInput = form.querySelector("input[name='instagram']");
     const roleInput = form.querySelector("select[name='role']");
 
-    // Animación de error
+    // 🔹 Animación de error
     function animateError(input) {
         input.classList.add("border-red-500", "animate-shake");
         setTimeout(() => input.classList.remove("animate-shake"), 400);
     }
 
-    // Validaciones
+    // 🔹 Validaciones
     function validateEmail(input) {
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-        if (!emailPattern.test(input.value.trim())) {
-            animateError(input);
-            return false;
-        }
-        return true;
+        const isValid = emailPattern.test(input.value.trim());
+        if (!isValid) animateError(input);
+        return isValid;
     }
 
     function validatePassword(input) {
-        if (input.value.trim().length < 6) {
-            animateError(input);
-            return false;
-        }
-        return true;
+        const value = input.value.trim();
+        // 🔹 Contraseña más fuerte: mínimo 6 caracteres
+        const isValid = value.length >= 6;
+        if (!isValid) animateError(input);
+        return isValid;
     }
 
     function validateConfirmPassword(passInput, confirmInput) {
-        if (confirmInput.value.trim() !== passInput.value.trim()) {
-            animateError(confirmInput);
-            return false;
-        }
-        return true;
+        const isValid = confirmInput.value.trim() === passInput.value.trim();
+        if (!isValid) animateError(confirmInput);
+        return isValid;
     }
 
-    // Validación en tiempo real
+    function validateRequired(input) {
+        const isValid = input.value.trim() !== "";
+        if (!isValid) animateError(input);
+        return isValid;
+    }
+
+    // 🔹 Validación en tiempo real
     emailInput.addEventListener("input", () => validateEmail(emailInput));
     passInput.addEventListener("input", () => validatePassword(passInput));
     confirmInput.addEventListener("input", () => validateConfirmPassword(passInput, confirmInput));
 
-    // Envío del formulario
+    // 🔹 Envío del formulario
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         if (
             !validateEmail(emailInput) ||
             !validatePassword(passInput) ||
-            !validateConfirmPassword(passInput, confirmInput)
+            !validateConfirmPassword(passInput, confirmInput) ||
+            !validateRequired(fullNameInput) ||
+            !validateRequired(usernameInput) ||
+            !validateRequired(roleInput)
         ) {
             Swal.fire("Error", "Por favor corrige los errores antes de continuar.", "error");
             return;
@@ -78,17 +87,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 color: "#fff"
             });
 
-            // Crear usuario en Auth
+            // 🔹 Crear usuario en Auth
             const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
             const user = userCredential.user;
 
-            // Guardar datos en Firestore
+            // 🔹 Guardar datos en Firestore
             await setDoc(doc(db, "usuarios", user.uid), {
                 fullName: fullNameInput.value.trim(),
                 username: usernameInput.value.trim(),
                 email: emailInput.value.trim(),
-                dob: dobInput.value,
-                country: countryInput.value.trim(),
+                dob: dobInput.value || null,
+                country: countryInput.value.trim() || null,
                 twitter: twitterInput.value.trim() || null,
                 instagram: instagramInput.value.trim() || null,
                 role: roleInput.value,
@@ -103,15 +112,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 color: "#fff",
                 confirmButtonColor: "#ec4899"
             }).then(() => {
+                // 🔹 Redirección (ajusta la ruta según tu proyecto)
                 window.location.href = "/inicio";
             });
 
         } catch (error) {
             console.error("Error al registrar usuario:", error);
+
+            let mensaje = "Ocurrió un error inesperado.";
+            if (error.code === "auth/email-already-in-use") {
+                mensaje = "El correo ya está registrado.";
+            } else if (error.code === "auth/invalid-email") {
+                mensaje = "El correo no es válido.";
+            } else if (error.code === "auth/weak-password") {
+                mensaje = "La contraseña es demasiado débil.";
+            }
+
             Swal.fire({
                 icon: "error",
                 title: "Error al registrarse",
-                text: error.message,
+                text: mensaje,
                 background: "#1f1f2e",
                 color: "#fff",
                 confirmButtonColor: "#ef4444"
@@ -120,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-/* Animación Shake */
+// 🔹 Animación Shake (CSS in JS)
 const style = document.createElement("style");
 style.innerHTML = `
 @keyframes shake {

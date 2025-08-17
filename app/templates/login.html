@@ -7,9 +7,11 @@
   <div
     class="w-full max-w-md p-10 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-3xl shadow-lg text-white animate-fadeIn"
     role="main"
-    aria-label="Formulario de inicio de sesión">
+    aria-labelledby="login-title">
 
-    <h2 class="text-4xl font-extrabold text-center text-pink-500 mb-8 drop-shadow-lg tracking-wide">
+    <!-- Título -->
+    <h2 id="login-title"
+      class="text-4xl font-extrabold text-center text-pink-500 mb-8 drop-shadow-lg tracking-wide">
       Iniciar sesión
     </h2>
 
@@ -19,11 +21,11 @@
         <div class="space-y-3 mb-6" role="alert">
           {% for category, message in messages %}
             <div
-              class="px-5 py-3 rounded-lg text-sm font-semibold
+              class="px-5 py-3 rounded-lg text-sm font-semibold shadow-md
               {% if category == 'danger' %} bg-red-600/90
               {% elif category == 'success' %} bg-green-600/90
               {% elif category == 'warning' %} bg-yellow-500/90
-              {% else %} bg-blue-600/90 {% endif %} shadow-md">
+              {% else %} bg-blue-600/90 {% endif %}">
               {{ message }}
             </div>
           {% endfor %}
@@ -33,6 +35,7 @@
 
     <!-- Login Form -->
     <form method="POST" action="{{ url_for('main.login') }}" class="space-y-6" novalidate>
+      <!-- Email -->
       <div>
         <label for="email" class="block text-sm text-pink-300 mb-2 font-medium">Correo electrónico</label>
         <input
@@ -46,6 +49,7 @@
           aria-describedby="emailHelp" />
       </div>
 
+      <!-- Password -->
       <div class="relative">
         <label for="password" class="block text-sm text-pink-300 mb-2 font-medium">Contraseña</label>
         <input
@@ -56,6 +60,7 @@
           autocomplete="current-password"
           placeholder="••••••••"
           class="w-full px-5 py-3 pr-14 rounded-lg bg-gray-900/80 text-white placeholder-gray-400 border border-gray-700 focus:ring-4 focus:ring-pink-500 focus:outline-none transition-shadow duration-300 shadow-inner" />
+        <!-- Toggle password -->
         <button
           type="button"
           onclick="togglePassword()"
@@ -84,6 +89,7 @@
         </button>
       </div>
 
+      <!-- Opciones -->
       <div class="flex items-center justify-between text-sm text-gray-300 select-none">
         <label class="flex items-center cursor-pointer">
           <input type="checkbox" name="remember" id="remember" class="mr-2 accent-pink-600" />
@@ -94,6 +100,7 @@
         </a>
       </div>
 
+      <!-- Submit -->
       <button
         type="submit"
         class="w-full bg-pink-600 hover:bg-pink-700 focus:ring-4 focus:ring-pink-400 font-bold py-3 rounded-full shadow-lg hover:shadow-pink-700/60 transition duration-300"
@@ -116,6 +123,7 @@
       </button>
     </div>
 
+    <!-- Link a registro -->
     <p class="mt-8 text-center text-sm text-gray-400">
       ¿No tenés cuenta?
       <a href="{{ url_for('main.register') }}" class="text-pink-400 hover:text-pink-300 font-semibold transition-colors duration-200">Registrate acá</a>
@@ -123,6 +131,7 @@
   </div>
 </div>
 
+<!-- Animación -->
 <style>
   @keyframes fadeIn {
     0% {
@@ -139,6 +148,7 @@
   }
 </style>
 
+<!-- Toggle Password -->
 <script>
   function togglePassword() {
     const pwd = document.getElementById("password");
