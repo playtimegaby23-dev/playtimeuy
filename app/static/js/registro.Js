@@ -1,15 +1,12 @@
+// registro.js
 import { auth, db } from "./firebase-config.js";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("registroForm");
-    if (!form) {
-        console.error("❌ No se encontró el formulario con id='registroForm'");
-        return;
-    }
+    if (!form) return console.error("❌ No se encontró el formulario con id='registroForm'");
 
-    // Inputs
     const emailInput = form.querySelector("input[name='email']");
     const passInput = form.querySelector("input[name='password']");
     const confirmInput = form.querySelector("input[name='confirm_password']");
@@ -21,10 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const instagramInput = form.querySelector("input[name='instagram']");
     const roleInput = form.querySelector("select[name='role']");
 
-    // Roles permitidos
-    const ROLES_VALIDOS = ["comprador", "vendedor", "creator", "admin", "promotor"];
+    const ROLES_VALIDOS = ["buyer", "creator", "promoter", "admin"];
 
-    // Añade un span debajo de cada input para errores
     function setError(input, message = "") {
         let errorSpan = input.parentNode.querySelector(".error-msg");
         if (!errorSpan) {
@@ -36,80 +31,74 @@ document.addEventListener("DOMContentLoaded", () => {
         if (message) animateError(input);
     }
 
-    // 🔹 Animación de error
     function animateError(input) {
         input.classList.add("border-red-500", "animate-shake");
         setTimeout(() => input.classList.remove("animate-shake"), 400);
     }
 
-    // 🔹 Validaciones
     function validateEmail(input) {
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        const isValid = emailPattern.test(input.value.trim());
-        setError(input, isValid ? "" : "Correo electrónico inválido");
-        return isValid;
+        const pattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const valid = pattern.test(input.value.trim());
+        setError(input, valid ? "" : "Correo electrónico inválido");
+        return valid;
     }
 
     function validatePassword(input) {
-        const value = input.value.trim();
-        const isValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(value);
-        setError(input, isValid ? "" : "La contraseña debe tener 8+ caracteres, mayúscula, número y símbolo");
-        return isValid;
+        const v = input.value.trim();
+        const valid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(v);
+        setError(input, valid ? "" : "Contraseña: 8+ caracteres, mayúscula, número y símbolo");
+        return valid;
     }
 
     function validateConfirmPassword(passInput, confirmInput) {
-        const isValid = confirmInput.value.trim() === passInput.value.trim();
-        setError(confirmInput, isValid ? "" : "Las contraseñas no coinciden");
-        return isValid;
+        const valid = passInput.value.trim() === confirmInput.value.trim();
+        setError(confirmInput, valid ? "" : "Las contraseñas no coinciden");
+        return valid;
     }
 
     function validateRequired(input, msg = "Campo obligatorio") {
-        const isValid = input.value.trim() !== "";
-        setError(input, isValid ? "" : msg);
-        return isValid;
+        const valid = input.value.trim() !== "";
+        setError(input, valid ? "" : msg);
+        return valid;
     }
 
     function validateUsername(input) {
-        const value = input.value.trim();
-        const isValid = /^[a-zA-Z0-9-_]{3,15}$/.test(value);
-        setError(input, isValid ? "" : "Usuario: 3-15 caracteres, letras/números/guiones");
-        return isValid;
+        const valid = /^[a-zA-Z0-9-_]{3,15}$/.test(input.value.trim());
+        setError(input, valid ? "" : "Usuario: 3-15 caracteres, letras/números/guiones");
+        return valid;
     }
 
     function validateDOB(input) {
         if (!input.value) return true;
         const birthDate = new Date(input.value);
         const age = new Date().getFullYear() - birthDate.getFullYear();
-        const isValid = age >= 13;
-        setError(input, isValid ? "" : "Debes tener mínimo 13 años");
-        return isValid;
+        const valid = age >= 13;
+        setError(input, valid ? "" : "Debes tener mínimo 13 años");
+        return valid;
     }
 
     function validateRole(input) {
-        const isValid = ROLES_VALIDOS.includes(input.value);
-        setError(input, isValid ? "" : "Rol inválido");
-        return isValid;
+        const valid = ROLES_VALIDOS.includes(input.value);
+        setError(input, valid ? "" : "Rol inválido");
+        return valid;
     }
 
-    // 🔹 Validación en tiempo real
+    // Validación en tiempo real
     emailInput.addEventListener("input", () => validateEmail(emailInput));
     passInput.addEventListener("input", () => validatePassword(passInput));
     confirmInput.addEventListener("input", () => validateConfirmPassword(passInput, confirmInput));
     usernameInput.addEventListener("input", () => validateUsername(usernameInput));
 
-    // 🔹 Envío del formulario
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        if (
-            !validateEmail(emailInput) ||
+        if (!validateEmail(emailInput) ||
             !validatePassword(passInput) ||
             !validateConfirmPassword(passInput, confirmInput) ||
             !validateRequired(fullNameInput) ||
             !validateUsername(usernameInput) ||
             !validateDOB(dobInput) ||
-            !validateRole(roleInput)
-        ) {
+            !validateRole(roleInput)) {
             Swal.fire("Error", "Corrige los errores antes de continuar.", "error");
             return;
         }
@@ -124,11 +113,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 color: "#fff"
             });
 
-            // 🔹 Crear usuario en Auth
             const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
             const user = userCredential.user;
 
-            // 🔹 Guardar datos en Firestore
             await setDoc(doc(db, "usuarios", user.uid), {
                 fullName: fullNameInput.value.trim(),
                 username: usernameInput.value.trim(),
@@ -141,37 +128,36 @@ document.addEventListener("DOMContentLoaded", () => {
                 creadoEn: serverTimestamp()
             });
 
+            // 🔹 Enviar correo de verificación
+            await sendEmailVerification(user);
+
             Swal.fire({
                 icon: "success",
                 title: "¡Registro exitoso!",
-                text: "Tu cuenta ha sido creada correctamente.",
+                html: "Revisa tu correo para verificar tu cuenta.",
                 background: "#1f1f2e",
                 color: "#fff",
                 confirmButtonColor: "#ec4899"
             }).then(() => {
-                // 🔹 Redirección según rol
                 switch (roleInput.value) {
-                    case "comprador": window.location.href = "/users/comprador"; break;
-                    case "vendedor": window.location.href = "/users/vendedor"; break;
+                    case "buyer": window.location.href = "/users/buyer"; break;
                     case "creator": window.location.href = "/creators/perfil_creator"; break;
+                    case "promoter": window.location.href = "/users/promoter"; break;
                     case "admin": window.location.href = "/admin/admindashboard"; break;
-                    case "promotor": window.location.href = "/users/promotor"; break;
                     default: window.location.href = "/home/index";
                 }
             });
 
         } catch (error) {
             console.error("Error al registrar usuario:", error);
-
             let mensaje = "Ocurrió un error inesperado.";
             switch (error.code) {
                 case "auth/email-already-in-use": mensaje = "El correo ya está registrado."; break;
-                case "auth/invalid-email": mensaje = "El correo no es válido."; break;
-                case "auth/weak-password": mensaje = "La contraseña es demasiado débil."; break;
+                case "auth/invalid-email": mensaje = "Correo no válido."; break;
+                case "auth/weak-password": mensaje = "Contraseña débil."; break;
                 case "auth/too-many-requests": mensaje = "Demasiados intentos, intenta más tarde."; break;
-                case "auth/network-request-failed": mensaje = "Error de red. Revisa tu conexión."; break;
+                case "auth/network-request-failed": mensaje = "Error de red, revisa tu conexión."; break;
             }
-
             Swal.fire({
                 icon: "error",
                 title: "Error al registrarse",
@@ -184,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// 🔹 Animación Shake (CSS in JS)
+// 🔹 Animación Shake
 const style = document.createElement("style");
 style.innerHTML = `
 @keyframes shake {
@@ -192,8 +178,6 @@ style.innerHTML = `
   20%, 60% { transform: translateX(-6px); }
   40%, 80% { transform: translateX(6px); }
 }
-.animate-shake {
-  animation: shake 0.4s;
-}
+.animate-shake { animation: shake 0.4s; }
 `;
 document.head.appendChild(style);

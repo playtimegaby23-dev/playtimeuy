@@ -39,7 +39,7 @@
     {% endwith %}
 
     <!-- Login Form -->
-    <form method="POST" action="{{ url_for('main.login') }}" class="space-y-6" novalidate>
+    <form id="loginForm" method="POST" action="{{ url_for('main.login') }}" class="space-y-6" novalidate>
       <!-- Email -->
       <div>
         <label for="email" class="block text-sm text-pink-300 mb-2 font-medium">Correo electrónico</label>
@@ -68,7 +68,7 @@
         <!-- Toggle password -->
         <button
           type="button"
-          onclick="togglePassword()"
+          id="togglePasswordBtn"
           class="absolute right-4 top-11 text-gray-400 hover:text-pink-400 focus:outline-none select-none"
           aria-label="Mostrar u ocultar contraseña"
           tabindex="-1">
@@ -112,7 +112,7 @@
   </div>
 </div>
 
-<!-- Animación -->
+<!-- Animación FadeIn -->
 <style>
   @keyframes fadeIn {
     0% { opacity: 0; transform: translateY(30px); }
@@ -121,22 +121,42 @@
   .animate-fadeIn { animation: fadeIn 0.8s ease forwards; }
 </style>
 
-<!-- Toggle Password -->
+<!-- Toggle Password JS -->
 <script>
-  function togglePassword() {
+  document.addEventListener("DOMContentLoaded", () => {
     const pwd = document.getElementById("password");
-    const icon = document.getElementById("eyeIcon");
-    const show = `
+    const toggleBtn = document.getElementById("togglePasswordBtn");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    const showSVG = `
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
-    const hide = `
+
+    const hideSVG = `
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
         d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a10.056 10.056 0 013.127-4.43m1.812-1.388A9.965 9.965 0 0112 5c4.478 0 8.269 2.943 9.543 7a10.055 10.055 0 01-4.043 5.195M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />`;
-    if (pwd.type === "password") { pwd.type = "text"; icon.innerHTML = hide; }
-    else { pwd.type = "password"; icon.innerHTML = show; }
-  }
+
+    toggleBtn.addEventListener("click", () => {
+      if (pwd.type === "password") {
+        pwd.type = "text";
+        eyeIcon.innerHTML = hideSVG;
+      } else {
+        pwd.type = "password";
+        eyeIcon.innerHTML = showSVG;
+      }
+    });
+
+    // Validación simple al enviar
+    const form = document.getElementById("loginForm");
+    form.addEventListener("submit", (e) => {
+      if (!pwd.value || !document.getElementById("email").value) {
+        e.preventDefault();
+        Swal.fire("Error", "Completa todos los campos.", "error");
+      }
+    });
+  });
 </script>
 {% endblock %}
