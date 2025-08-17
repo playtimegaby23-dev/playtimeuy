@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}PlayTimeUY - Promotor{% endblock %}
+
+{% block banner %}
+<section class="relative flex flex-col items-center justify-center min-h-[70vh] text-center px-6">
+  <h1 class="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg">
+    Bienvenido, <span class="text-green-400">Promotor</span>
+  </h1>
+  <p class="mt-4 text-lg text-gray-300 max-w-2xl">
+    Promociona perfiles y gana comisiones por cada suscripción que generes.
+  </p>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container py-12 grid gap-8 md:grid-cols-3">
+  <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
+    <h3 class="text-xl font-semibold mb-3">Enlaces de promoción</h3>
+    <p class="text-gray-400">Comparte enlaces personalizados y recibe tus comisiones.</p>
+  </div>
+  <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
+    <h3 class="text-xl font-semibold mb-3">Tus estadísticas</h3>
+    <p class="text-gray-400">Mide tu impacto y el alcance de tus promociones.</p>
+  </div>
+</div>
+{% endblock %}

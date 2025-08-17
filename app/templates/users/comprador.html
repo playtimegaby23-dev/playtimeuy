@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}PlayTimeUY - Comprador{% endblock %}
+
+{% block banner %}
+<section class="relative flex flex-col items-center justify-center min-h-[70vh] text-center px-6">
+  <h1 class="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg">
+    Bienvenido, <span class="text-primary">Comprador</span>
+  </h1>
+  <p class="mt-4 text-lg text-gray-300 max-w-2xl">
+    Descubre contenido exclusivo de nuestras creadoras y apoya tu talento favorito.
+  </p>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container py-12 grid gap-8 md:grid-cols-3">
+  <!-- Card ejemplo -->
+  <div class="bg-secondary rounded-2xl shadow-card overflow-hidden hover:shadow-glow transition">
+    <img src="/static/img/sample1.jpg" alt="Contenido exclusivo" class="w-full h-48 object-cover">
+    <div class="p-6">
+      <h3 class="text-xl font-semibold mb-2">Contenido exclusivo</h3>
+      <p class="text-gray-400">Accede a publicaciones privadas de tus creadoras favoritas.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

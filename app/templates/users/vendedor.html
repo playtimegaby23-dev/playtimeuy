@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}PlayTimeUY - Vendedor{% endblock %}
+
+{% block banner %}
+<section class="relative flex flex-col items-center justify-center min-h-[70vh] text-center px-6">
+  <h1 class="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg">
+    Bienvenido, <span class="text-accent">Vendedor</span>
+  </h1>
+  <p class="mt-4 text-lg text-gray-300 max-w-2xl">
+    Publica tu contenido y comienza a generar ingresos de forma segura.
+  </p>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container py-12 grid gap-8 md:grid-cols-2">
+  <!-- Card ejemplo -->
+  <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
+    <h3 class="text-xl font-semibold mb-3">Tus estadísticas</h3>
+    <p class="text-gray-400">Visualiza tus ventas, clientes y métricas en tiempo real.</p>
+  </div>
+  <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
+    <h3 class="text-xl font-semibold mb-3">Sube contenido</h3>
+    <p class="text-gray-400">Administra tus fotos, videos y publicaciones privadas.</p>
+  </div>
+</div>
+{% endblock %}

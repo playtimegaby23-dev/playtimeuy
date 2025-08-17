@@ -55,7 +55,6 @@
   <link rel="icon" href="/static/img/favicon.png" type="image/png">
 
   <style>
-    /* Fondo sutil con patrón */
     body {
       background:
         radial-gradient(60rem 60rem at 120% -10%, rgba(168,85,247,.16), transparent 70%),
@@ -84,7 +83,7 @@
     .pt-wordmark {
       position: absolute; text-align: center; line-height: 1;
       font-weight: 800; letter-spacing: .5px;
-      text-transform: none; color: #fff;
+      color: #fff;
       filter: drop-shadow(0 6px 18px rgba(236,72,153,.45));
       animation: glow 2.2s ease-in-out infinite;
     }
@@ -94,13 +93,10 @@
       0%,100% { text-shadow: 0 0 0 rgba(236,72,153,.0) }
       50%     { text-shadow: 0 0 16px rgba(236,72,153,.75) }
     }
-    /* Reduce motion */
     @media (prefers-reduced-motion: reduce) {
       .pt-ring { animation: none }
       .pt-wordmark { animation: none }
     }
-
-    /* Mejoras de foco accesible */
     :focus-visible {
       outline: 2px solid #ec4899;
       outline-offset: 2px;
@@ -109,7 +105,7 @@
 </head>
 
 <body class="text-white font-sans overflow-x-hidden selection:bg-primary/20 selection:text-white">
-  <!-- Loader (HTML/CSS puro) -->
+  <!-- Loader -->
   <div id="loader" class="pt-loader" role="status" aria-live="polite" aria-label="Cargando PlayTimeUY">
     <div class="relative">
       <div class="pt-ring"></div>
@@ -120,7 +116,7 @@
     </div>
   </div>
 
-  <!-- Mensaje si no hay JS -->
+  <!-- No JS Warning -->
   <noscript>
     <div class="fixed inset-x-0 top-0 z-[1001] bg-pink-600 text-white text-center py-2">
       Habilitá JavaScript para la mejor experiencia en PlayTimeUY.
@@ -130,7 +126,7 @@
   <!-- Navbar -->
   {% include 'navbar.html' %}
 
-  <!-- Banner -->
+  <!-- Banner dinámico -->
   {% block banner %}{% endblock %}
 
   <!-- Contenido -->
@@ -143,9 +139,9 @@
 
   <!-- Scripts -->
   <script>
-    // Oculta el loader cuando el contenido termina de cargar
+    // Oculta el loader cuando carga
     (function() {
-      const MIN_VISIBLE = 350; // ms para evitar parpadeos
+      const MIN_VISIBLE = 400; 
       const start = Date.now();
       const hide = () => {
         const elapsed = Date.now() - start;
@@ -158,7 +154,6 @@
           el.addEventListener('transitionend', () => el.remove(), { once: true });
         }, wait);
       };
-      // Cubre la mayoría de los casos
       if (document.readyState === 'complete') hide();
       else window.addEventListener('load', hide);
     })();
