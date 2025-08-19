@@ -1,0 +1,32 @@
+"""
+WSGI entrypoint for production servers (Gunicorn, uWSGI, Render, Heroku, etc.)
+-----------------------------------------------------------------------------
+
+Usage examples:
+  - Local test:    gunicorn wsgi:app --bind 0.0.0.0:5000 --workers 4
+  - Heroku/Railway: Procfile ->  web: gunicorn wsgi:app --workers 4 --threads 2 --bind 0.0.0.0:$PORT
+  - Render:        Start Command -> gunicorn wsgi:app --workers 4 --threads 2 --bind 0.0.0.0:$PORT
+"""
+
+import logging
+from app import create_app
+
+# =========================================================
+# Logging básico (útil para servidores WSGI)
+# =========================================================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
+# =========================================================
+# Instancia de la aplicación Flask
+# =========================================================
+app = create_app()
+
+# =========================================================
+# Punto de entrada para Gunicorn/uWSGI
+# =========================================================
+if __name__ == "__main__":
+    # ⚠️ Solo para debug local. En producción usar gunicorn.
+    app.run(host="0.0.0.0", port=5000, debug=False)

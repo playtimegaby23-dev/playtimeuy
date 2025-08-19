@@ -1,24 +1,42 @@
-# Entornos virtuales
+# =========================
+# ENTORNOS VIRTUALES
+# =========================
 venv/
 env/
 
-# Node.js
+# =========================
+# NODE.JS
+# =========================
 node_modules/
 
-# Archivos del sistema
+# =========================
+# ARCHIVOS DE SISTEMA
+# =========================
 __pycache__/
 *.pyc
 *.pyo
 .DS_Store
 Thumbs.db
 
-# Configuración local
+# =========================
+# CONFIGURACIÓN LOCAL
+# =========================
 *.env
+.env.*
+!.env.example   # Excepción: mantené un ejemplo sin secretos
 
-# Archivos sensibles
+# =========================
+# ARCHIVOS SENSIBLES
+# =========================
 secrets/
 *.json
+*.key
+*.pem
 
-# Logs y archivos temporales
+# =========================
+# LOGS Y ARCHIVOS TEMPORALES
+# =========================
 *.log
 *.tmp
+*.bak
+*.swp

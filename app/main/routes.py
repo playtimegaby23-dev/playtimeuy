@@ -1,30 +1,37 @@
-"""
-Rutas principales de la aplicación con autenticación y nueva estructura de templates
-"""
-
 import os
 import json
 import uuid
+import logging
 from pathlib import Path
-from functools import wraps
 from datetime import timedelta
+
 from flask import (
-    Blueprint, render_template, request, redirect, url_for,
-    flash, session, current_app
+    Blueprint, render_template, request, redirect,
+    url_for, flash, session, current_app, jsonify
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# ────────────────────────────────────────────────────────────────────────
+# Configuración básica
+# ────────────────────────────────────────────────────────────────────────
 main = Blueprint("main", __name__)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-# ------------------- DIRECTORIOS -------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+USERS_FILE = DATA_DIR / "users.json"
+if not USERS_FILE.exists():
+    USERS_FILE.write_text(json.dumps({}, indent=2, ensure_ascii=False))
 
-# ------------------- FIREBASE ADMIN & FIRESTORE -------------------
+# ────────────────────────────────────────────────────────────────────────
+# Integraciones Firebase
+# ────────────────────────────────────────────────────────────────────────
 FIREBASE_ADMIN_AVAILABLE = False
 USE_FIRESTORE = False
 db = None
@@ -33,6 +40,7 @@ firebase_admin_auth = None
 try:
     import firebase_admin
     from firebase_admin import credentials, auth as firebase_admin_auth_module, firestore
+
     cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
     if cred_path and os.path.exists(cred_path):
         cred = credentials.Certificate(cred_path)
@@ -42,17 +50,18 @@ try:
         firebase_admin_auth = firebase_admin_auth_module
         FIREBASE_ADMIN_AVAILABLE = True
         USE_FIRESTORE = True
+        logger.info("[Firebase Admin] Inicializado correctamente.")
     else:
-        print("[Firebase Admin] GOOGLE_APPLICATION_CREDENTIALS no configurado o no existe.")
+        logger.warning("[Firebase Admin] Variable GOOGLE_APPLICATION_CREDENTIALS no establecida o archivo inexistente.")
 except Exception as e:
-    print("[Firebase Admin] No disponible o error en inicialización:", e)
+    logger.warning("[Firebase Admin] No disponible: %s", e)
 
-# ------------------- PYREBASE (Autenticación) -------------------
+# Pyrebase (para email/password y reset password desde servidor si se desea)
 AUTH_AVAILABLE = False
 firebase_auth = None
-
 try:
     import pyrebase
+
     firebase_config = {
         "apiKey": os.getenv("FIREBASE_API_KEY", ""),
         "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN", ""),
@@ -62,36 +71,33 @@ try:
         "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID", ""),
         "appId": os.getenv("FIREBASE_APP_ID", ""),
     }
+
     if firebase_config["apiKey"]:
         firebase = pyrebase.initialize_app(firebase_config)
         firebase_auth = firebase.auth()
         AUTH_AVAILABLE = True
+        logger.info("[Pyrebase] Inicializado correctamente.")
     else:
-        print("[Pyrebase] Configuración incompleta, auth no disponible.")
+        logger.warning("[Pyrebase] Falta FIREBASE_API_KEY; Pyrebase deshabilitado.")
 except Exception as e:
-    print("[Pyrebase] No disponible:", e)
+    logger.warning("[Pyrebase] No disponible: %s", e)
 
-# ------------------- FALLBACK LOCAL -------------------
-USERS_FILE = DATA_DIR / "users.json"
-if not USERS_FILE.exists():
-    USERS_FILE.write_text(json.dumps({}))
-
-
+# ────────────────────────────────────────────────────────────────────────
+# Helpers de almacenamiento local (fallback)
+# ────────────────────────────────────────────────────────────────────────
 def load_users():
     try:
-        return json.loads(USERS_FILE.read_text())
+        return json.loads(USERS_FILE.read_text(encoding="utf-8"))
     except Exception:
         return {}
 
-
 def save_users(users):
-    USERS_FILE.write_text(json.dumps(users, indent=2, ensure_ascii=False))
-
+    USERS_FILE.write_text(json.dumps(users, indent=2, ensure_ascii=False), encoding="utf-8")
 
 def create_local_user(email, password, username="", full_name="", role="buyer", extra=None):
     users = load_users()
     if email in users:
-        raise ValueError("El email ya está registrado (local).")
+        raise ValueError("Email ya registrado.")
     local_id = str(uuid.uuid4())
     users[email] = {
         "localId": local_id,
@@ -99,204 +105,106 @@ def create_local_user(email, password, username="", full_name="", role="buyer", 
         "password_hash": generate_password_hash(password),
         "username": username or email.split("@")[0],
         "full_name": full_name,
-        "emailVerified": True,
-        "role": role if role in {"buyer", "creator", "promoter"} else "buyer",
+        "role": role,
+        "emailVerified": True,  # local no tiene verificación real
         "is_admin": False,
         **(extra or {})
     }
     save_users(users)
     return users[email]
 
-
-def update_local_user(email, fields: dict):
-    users = load_users()
-    if email not in users:
-        return
-    users[email].update(fields)
-    save_users(users)
-
-
-def get_local_user_by_uid(uid):
-    users = load_users()
-    for _, u in users.items():
-        if u.get("localId") == uid:
-            return u
-    return None
-
-
 def authenticate_local_user(email, password):
     users = load_users()
     user = users.get(email)
     if not user:
-        raise ValueError("Usuario no encontrado (local).")
+        raise ValueError("Usuario no encontrado.")
     if not check_password_hash(user["password_hash"], password):
-        raise ValueError("Contraseña incorrecta (local).")
+        raise ValueError("Contraseña incorrecta.")
     return user
 
-
-# ------------------- HELPERS / DECORADORES -------------------
+# ────────────────────────────────────────────────────────────────────────
+# Decoradores y utilidades
+# ────────────────────────────────────────────────────────────────────────
 def login_required(f):
     @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user' not in session:
-            flash("Por favor, inicia sesión para acceder a esta página.", "warning")
-            return redirect(url_for('main.login'))
+    def wrapper(*args, **kwargs):
+        if "user" not in session:
+            flash("Inicia sesión primero.", "warning")
+            return redirect(url_for("main.login"))
         return f(*args, **kwargs)
-    return decorated
-
-
-def role_required(*roles):
-    def wrapper(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            if 'user' not in session:
-                flash("Por favor, inicia sesión para acceder a esta página.", "warning")
-                return redirect(url_for('main.login'))
-            user_role = session.get('role', 'buyer')
-            if roles and user_role not in roles:
-                flash("No tenés permiso para acceder a esta sección.", "danger")
-                return redirect(route_for_role(user_role))
-            return f(*args, **kwargs)
-        return decorated
     return wrapper
 
-
-def load_user_data(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user' in session:
-            uid = session['user']
-            if USE_FIRESTORE and db:
-                try:
-                    doc = db.collection("usuarios").document(uid).get()
-                    if doc.exists:
-                        d = doc.to_dict()
-                        session['role'] = d.get('role', 'buyer')
-                        session['is_admin'] = d.get('is_admin', False)
-                        session['full_name'] = d.get('full_name')
-                        session['username'] = d.get('username')
-                    else:
-                        session.clear()
-                        flash("Usuario no encontrado. Iniciá sesión nuevamente.", "danger")
-                        return redirect(url_for('main.login'))
-                except Exception as e:
-                    print("[Firestore] Error cargando datos de usuario:", e)
-                    session.setdefault('role', 'buyer')
-                    session.setdefault('is_admin', False)
-            else:
-                found = get_local_user_by_uid(uid)
-                if not found:
-                    session.clear()
-                    flash("Usuario no encontrado (local). Iniciá sesión nuevamente.", "danger")
-                    return redirect(url_for('main.login'))
-                session['role'] = found.get('role', 'buyer')
-                session['is_admin'] = found.get('is_admin', False)
-                session['full_name'] = found.get('full_name')
-                session['username'] = found.get('username')
-        return f(*args, **kwargs)
-    return decorated
-
-
-def get_current_user():
-    if 'user' not in session:
-        return None
-    return {
-        "uid": session['user'],
-        "email": session.get('email'),
-        "role": session.get('role', 'buyer'),
-        "is_admin": session.get('is_admin', False),
-        "full_name": session.get('full_name'),
-        "username": session.get('username')
-    }
-
-
 def route_for_role(role: str):
-    mapping = {
+    return url_for({
         "buyer": "main.dashboard_buyer",
         "creator": "main.dashboard_creator",
-        "promoter": "main.dashboard_promoter",
+        "promoter": "main.dashboard_promoter"
+    }.get(role, "main.dashboard_buyer"))
+
+def get_current_user():
+    if "user" not in session:
+        return None
+    return {
+        "uid": session.get("user"),
+        "email": session.get("email"),
+        "role": session.get("role"),
+        "full_name": session.get("full_name"),
+        "username": session.get("username"),
+        "is_admin": session.get("is_admin", False),
     }
-    endpoint = mapping.get(role, "main.dashboard_buyer")
-    return url_for(endpoint)
 
+@main.app_context_processor
+def inject_has_endpoint():
+    """Permite usar has_endpoint('blueprint.endpoint') en templates."""
+    def has_endpoint(name: str) -> bool:
+        try:
+            url_for(name)
+            return True
+        except Exception:
+            return False
+    return dict(has_endpoint=has_endpoint)
 
-def basic_field(value: str) -> str:
-    return (value or "").strip()
-
-
-def validate_register_form(form):
-    email = basic_field(form.get("email"))
-    password = form.get("password") or ""
-    confirm_password = form.get("confirm_password") or ""
-    username = basic_field(form.get("username")) or (email.split("@")[0] if email else "")
-    full_name = basic_field(form.get("full_name"))
-    role = (form.get("role") or "buyer").strip()
-    dob = basic_field(form.get("dob"))
-    country = basic_field(form.get("country"))
-    twitter = basic_field(form.get("twitter"))
-    instagram = basic_field(form.get("instagram"))
-
-    if not email or not password:
-        return None, "Email y contraseña son requeridos."
-
-    if password != confirm_password:
-        return None, "Las contraseñas no coinciden."
-
-    if len(password) < 6:
-        return None, "La contraseña debe tener al menos 6 caracteres."
-
-    if role not in {"buyer", "creator", "promoter"}:
-        return None, "Rol inválido."
-
-    payload = {
-        "email": email,
-        "password": password,
-        "username": username,
-        "full_name": full_name,
-        "role": role,
-        "dob": dob,
-        "country": country,
-        "twitter": twitter,
-        "instagram": instagram,
-    }
-    return payload, None
-
-
-# ------------------- RUTAS -------------------
+# ────────────────────────────────────────────────────────────────────────
+# Rutas principales
+# ────────────────────────────────────────────────────────────────────────
 @main.route("/")
 def index():
     return render_template("home/index.html", user=get_current_user())
 
-
-# ---------- Registro ----------
+# Registro (email/password)
 @main.route("/register", methods=["GET", "POST"])
 def register():
-    if 'user' in session:
+    if "user" in session:
         return redirect(route_for_role(session.get("role", "buyer")))
 
     if request.method == "POST":
-        if basic_field(request.form.get("website")):
-            flash("Error en el formulario.", "danger")
+        # Honeypot anti-bot
+        if request.form.get("website"):
+            flash("Error en formulario.", "danger")
             return redirect(url_for("main.register"))
 
-        data, err = validate_register_form(request.form)
-        if err:
-            flash(err, "danger")
+        email = (request.form.get("email") or "").strip().lower()
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm_password") or ""
+        full_name = (request.form.get("full_name") or "").strip()
+        username = (request.form.get("username") or "").strip() or email.split("@")[0]
+        role = (request.form.get("role") or "buyer").strip()
+
+        if password != confirm:
+            flash("Las contraseñas no coinciden.", "danger")
+            return redirect(url_for("main.register"))
+        if len(password) < 6:
+            flash("La contraseña debe tener al menos 6 caracteres.", "danger")
             return redirect(url_for("main.register"))
 
-        email = data["email"]
-        password = data["password"]
-        username = data["username"]
-        full_name = data["full_name"]
-        role = data["role"]
-
+        # Intento con Firebase (si está disponible)
         if AUTH_AVAILABLE and firebase_auth:
             try:
                 user = firebase_auth.create_user_with_email_and_password(email, password)
                 login_user = firebase_auth.sign_in_with_email_and_password(email, password)
-                firebase_auth.send_email_verification(login_user['idToken'])
-
-                local_id = user.get('localId', str(uuid.uuid4()))
+                # Enviar verificación de correo
+                firebase_auth.send_email_verification(login_user["idToken"])
+                local_id = user.get("localId", str(uuid.uuid4()))
                 if USE_FIRESTORE and db:
                     db.collection("usuarios").document(local_id).set({
                         "full_name": full_name,
@@ -305,198 +213,201 @@ def register():
                         "role": role,
                         "is_admin": False,
                         "verified": False,
-                        "dob": data["dob"],
-                        "country": data["country"],
-                        "twitter": data["twitter"],
-                        "instagram": data["instagram"],
                     })
-
-                flash("Registro exitoso. Revisá tu correo y verificá tu cuenta antes de iniciar sesión.", "success")
+                flash("✅ Revisa tu correo y verifica tu cuenta para continuar.", "success")
                 return redirect(url_for("main.login"))
             except Exception as e:
-                print("[Firebase Register] Error:", e)
-                flash("No se pudo registrar en remoto, probamos modo local.", "warning")
+                logger.warning("Firebase register error: %s", e)
+                # Continúa a fallback local sin mensajes crudos
+                flash("No se pudo registrar con el servicio remoto. Se utilizará el registro local.", "warning")
 
+        # Fallback local
         try:
-            extra = {
-                "dob": data["dob"],
-                "country": data["country"],
-                "twitter": data["twitter"],
-                "instagram": data["instagram"],
-            }
-            create_local_user(email, password, username, full_name, role, extra=extra)
-            flash("Registro local exitoso. Ya podés iniciar sesión.", "success")
+            create_local_user(email, password, username, full_name, role)
+            flash("Registro local exitoso. Ahora podés iniciar sesión.", "success")
             return redirect(url_for("main.login"))
         except Exception as e:
             flash(str(e), "danger")
 
     return render_template("auth/register.html")
 
-
-# ---------- Login ----------
+# Login (email/password)
 @main.route("/login", methods=["GET", "POST"])
 def login():
-    if 'user' in session:
+    if "user" in session:
         return redirect(route_for_role(session.get("role", "buyer")))
 
     if request.method == "POST":
-        email = basic_field(request.form.get("email"))
+        email = (request.form.get("email") or "").strip().lower()
         password = request.form.get("password") or ""
         remember = request.form.get("remember") == "on"
 
-        if not email or not password:
-            flash("Email y contraseña son requeridos.", "danger")
-            return redirect(url_for("main.login"))
-
+        # Firebase
         if AUTH_AVAILABLE and firebase_auth:
             try:
                 user = firebase_auth.sign_in_with_email_and_password(email, password)
                 info = firebase_auth.get_account_info(user["idToken"])
-                email_verified = info["users"][0].get("emailVerified", False)
-
-                if not email_verified:
-                    flash("Debés verificar tu correo antes de acceder.", "warning")
+                firebase_user = info["users"][0]
+                if not firebase_user.get("emailVerified", False):
+                    flash("Debes verificar tu correo antes de ingresar.", "warning")
                     return redirect(url_for("main.login"))
 
-                session['user'] = user.get('localId')
-                session['email'] = email
+                session["user"] = firebase_user.get("localId") or firebase_user.get("uid") or str(uuid.uuid4())
+                session["email"] = email
+                session["role"] = "buyer"
 
+                if USE_FIRESTORE and db:
+                    doc = db.collection("usuarios").document(session["user"]).get()
+                    if doc.exists:
+                        session["role"] = doc.to_dict().get("role", "buyer")
+
+                # Recordarme
                 session.permanent = remember
                 if remember:
                     current_app.permanent_session_lifetime = timedelta(days=30)
 
-                role = "buyer"
-                if USE_FIRESTORE and db:
-                    try:
-                        doc = db.collection("usuarios").document(session['user']).get()
-                        if doc.exists:
-                            role = doc.to_dict().get("role", "buyer")
-                    except Exception as e:
-                        print("[Firestore] Error obteniendo rol:", e)
-
-                session['role'] = role
-                flash("Bienvenido/a.", "success")
-                return redirect(route_for_role(role))
+                flash("Bienvenido.", "success")
+                return redirect(route_for_role(session["role"]))
             except Exception as e:
-                print("[Firebase Login] Error:", e)
-                flash("Fallo remoto, intentamos modo local.", "warning")
+                logger.warning("Firebase login error: %s", e)
+                flash("No se pudo autenticar con el servicio remoto. Probá de nuevo o usa el acceso local.", "warning")
 
+        # Fallback local
         try:
             user = authenticate_local_user(email, password)
-            if not user.get("emailVerified", False):
-                flash("Debés verificar tu correo antes de acceder. (local)", "warning")
-                return redirect(url_for("main.login"))
-            session['user'] = user["localId"]
-            session['email'] = user["email"]
-            session['role'] = user.get("role", "buyer")
-
+            session["user"] = user["localId"]
+            session["email"] = user["email"]
+            session["role"] = user["role"]
             session.permanent = remember
             if remember:
                 current_app.permanent_session_lifetime = timedelta(days=30)
 
-            flash("Bienvenido/a.", "success")
-            return redirect(route_for_role(session['role']))
+            flash("Bienvenido.", "success")
+            return redirect(route_for_role(session["role"]))
         except Exception as e:
-            print("[Local Login] Error:", e)
+            logger.info("Local login error: %s", e)
             flash("Credenciales incorrectas.", "danger")
 
     return render_template("auth/login.html")
 
-
-# ---------- Google Login ----------
-@main.route("/login/google", methods=["POST"])
-def login_google():
-    id_token = request.json.get("idToken")
-    if not id_token:
-        return {"error": "No token provided"}, 400
-    if not FIREBASE_ADMIN_AVAILABLE or not firebase_admin_auth:
-        flash("Servicio Google login no disponible.", "danger")
-        return redirect(url_for("main.login"))
-
-    try:
-        decoded_token = firebase_admin_auth.verify_id_token(id_token)
-        session["user"] = decoded_token["uid"]
-        session["email"] = decoded_token.get("email")
-        role = "buyer"
-        if USE_FIRESTORE and db:
-            try:
-                doc = db.collection("usuarios").document(session["user"]).get()
-                if doc.exists:
-                    role = doc.to_dict().get("role", "buyer")
-            except Exception as e:
-                print("[Firestore] Error rol Google:", e)
-        session["role"] = role
-        flash("Inicio de sesión con Google exitoso.", "success")
-        return redirect(route_for_role(role))
-    except Exception as e:
-        print("Error verificando token Firebase:", e)
-        flash("Error autenticando con Google.", "danger")
-        return redirect(url_for("main.login"))
-
-
-# ---------- Dashboards ----------
-@main.route("/dashboard")
-@login_required
-@load_user_data
-def dashboard():
-    role = session.get("role", "buyer")
-    return redirect(route_for_role(role))
-
-
-@main.route("/dashboard/buyer")
-@login_required
-@load_user_data
-@role_required("buyer")
-def dashboard_buyer():
-    return render_template("users/user_panel.html", user=get_current_user())
-
-
-@main.route("/dashboard/creator")
-@login_required
-@load_user_data
-@role_required("creator")
-def dashboard_creator():
-    return render_template("creators/creator_panel.html", user=get_current_user())
-
-
-@main.route("/dashboard/promoter")
-@login_required
-@load_user_data
-@role_required("promoter")
-def dashboard_promoter():
-    return render_template("users/promotor.html", user=get_current_user())
-
-
-@main.route("/dashboard/admin")
-@login_required
-@load_user_data
-@role_required("admin")
-def dashboard_admin():
-    return render_template("admin/admindashboard.html", user=get_current_user())
-
-
-# ---------- Perfil ----------
-@main.route("/profile")
-@login_required
-@load_user_data
-def profile():
-    return render_template("users/profile.html", user=get_current_user())
-
-
-# ---------- Logout ----------
+# Logout
 @main.route("/logout")
 def logout():
     session.clear()
     flash("Has cerrado sesión.", "success")
     return redirect(url_for("main.login"))
 
+# ────────────────────────────────────────────────────────────────────────
+# Recuperación de contraseña
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        if not email:
+            flash("Ingresá un correo válido.", "danger")
+            return redirect(url_for("main.forgot_password"))
 
-# ------------------- ERRORES -------------------
-@main.errorhandler(404)
-def page_not_found(e):
-    return render_template("404.html"), 404
+        # Enviar email de reset con Firebase si está disponible
+        if AUTH_AVAILABLE and firebase_auth:
+            try:
+                firebase_auth.send_password_reset_email(email)
+                flash("📩 Te enviamos un enlace para restablecer tu contraseña.", "success")
+                return redirect(url_for("main.login"))
+            except Exception as e:
+                logger.warning("Error enviando reset password con Firebase: %s", e)
+                flash("No se pudo enviar el correo de recuperación. Intenta nuevamente.", "danger")
+                return redirect(url_for("main.forgot_password"))
 
+        # Si no hay Firebase, mensaje informativo
+        flash("La recuperación de contraseña requiere el servicio remoto habilitado.", "warning")
+        return redirect(url_for("main.forgot_password"))
 
-@main.errorhandler(500)
-def server_error(e):
-    return render_template("500.html"), 500
+    return render_template("auth/forgot_password.html")
+
+# ────────────────────────────────────────────────────────────────────────
+# Login con Google (desde frontend: /login/google con idToken)
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/login/google", methods=["POST"])
+def login_google():
+    """
+    Endpoint para el auth.js del frontend:
+      - Recibe { "idToken": "<token_de_firebase>" }
+      - Verifica el token con Firebase Admin
+      - Inicia sesión de servidor y redirige al dashboard según rol
+    """
+    data = request.get_json(silent=True) or {}
+    id_token = data.get("idToken")
+
+    if not id_token:
+        return jsonify({"ok": False, "error": "Falta idToken"}), 400
+
+    if not FIREBASE_ADMIN_AVAILABLE or not firebase_admin_auth:
+        # No podemos verificar el token sin Firebase Admin
+        return jsonify({"ok": False, "error": "Verificación de token no disponible en el servidor."}), 503
+
+    try:
+        decoded = firebase_admin_auth.verify_id_token(id_token)
+        uid = decoded.get("uid")
+        email = (decoded.get("email") or "").lower()
+        email_verified = decoded.get("email_verified", False)
+        name = decoded.get("name", "")
+        username = email.split("@")[0] if email else f"user-{uid[:6]}"
+
+        if not email_verified:
+            return jsonify({"ok": False, "error": "Correo no verificado"}), 401
+
+        # Determinar rol desde Firestore si existe, sino buyer
+        role = "buyer"
+        if USE_FIRESTORE and db and uid:
+            doc = db.collection("usuarios").document(uid).get()
+            if doc.exists:
+                role = doc.to_dict().get("role", "buyer")
+            else:
+                # Crear documento mínimo si no existe
+                db.collection("usuarios").document(uid).set({
+                    "email": email,
+                    "full_name": name,
+                    "username": username,
+                    "role": role,
+                    "is_admin": False,
+                    "verified": True,
+                    "provider": "google"
+                })
+
+        # Sesión
+        session["user"] = uid
+        session["email"] = email
+        session["full_name"] = name
+        session["username"] = username
+        session["role"] = role
+        session["is_admin"] = False
+
+        # Redirección final (el frontend detecta .redirected)
+        return redirect(route_for_role(role))
+    except Exception as e:
+        logger.warning("Google login token verify error: %s", e)
+        return jsonify({"ok": False, "error": "Token inválido o expirado."}), 401
+
+# ────────────────────────────────────────────────────────────────────────
+# Dashboards
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/dashboard")
+@login_required
+def dashboard():
+    return redirect(route_for_role(session.get("role", "buyer")))
+
+@main.route("/dashboard/buyer")
+@login_required
+def dashboard_buyer():
+    return render_template("users/user_panel.html", user=get_current_user())
+
+@main.route("/dashboard/creator")
+@login_required
+def dashboard_creator():
+    return render_template("creators/creator_panel.html", user=get_current_user())
+
+@main.route("/dashboard/promoter")
+@login_required
+def dashboard_promoter():
+    return render_template("users/promotor.html", user=get_current_user())

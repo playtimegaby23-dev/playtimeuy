@@ -1,26 +1,431 @@
+{# C:\PlayTimeUY\app\templates\users\promotor.html #}
 {% extends "base.html" %}
-{% block title %}PlayTimeUY - Promotor{% endblock %}
+{% block title %}PlayTimeUY - Panel Promotor{% endblock %}
 
 {% block banner %}
-<section class="relative flex flex-col items-center justify-center min-h-[70vh] text-center px-6">
-  <h1 class="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg">
-    Bienvenido, <span class="text-green-400">Promotor</span>
+<section class="relative flex flex-col items-center justify-center min-h-[55vh] text-center px-6
+  bg-gradient-to-br from-purple-700 via-pink-600 to-red-500 rounded-b-3xl shadow-lg overflow-hidden">
+
+  <!-- Banner dinámico -->
+  <div class="absolute inset-0 opacity-30 animate-pulse bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/40 via-transparent to-transparent"></div>
+
+  <!-- Foto / Perfil -->
+  <img
+    id="pfp"
+    src="{{ url_for('static', filename='img/default-avatar.png') }}"
+    alt="Foto de perfil"
+    class="relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white shadow-xl object-cover hover:scale-105 transition-transform duration-300"
+  />
+
+  <h1 class="relative mt-4 text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg">
+    <span id="promotorNombre">Promotor</span> <span class="text-green-300">✔</span>
   </h1>
-  <p class="mt-4 text-lg text-gray-300 max-w-2xl">
-    Promociona perfiles y gana comisiones por cada suscripción que generes.
+  <p class="relative text-white/90 mt-1">Promotor Oficial de PlayTimeUY</p>
+
+  <p id="promotorBio" class="relative mt-3 text-base md:text-lg text-white/85 max-w-2xl">
+    Agregá tu bio profesional con logros y emojis 🚀✨
   </p>
+
+  <!-- Contacto & compartir -->
+  <div class="relative flex flex-wrap gap-3 mt-6">
+    <a id="btnEmail" href="#" class="px-4 py-2 bg-white/20 rounded-xl text-white hover:bg-white/30 backdrop-blur-md transition">📧 Email</a>
+    <a id="btnWhatsapp" href="#" target="_blank" class="px-4 py-2 bg-white/20 rounded-xl text-white hover:bg-white/30 backdrop-blur-md transition">💬 WhatsApp</a>
+    <button id="btnSharePerfil" class="px-4 py-2 bg-green-500 rounded-xl text-white hover:bg-green-600 transition">🔗 Compartir mi perfil</button>
+  </div>
 </section>
 {% endblock %}
 
 {% block content %}
-<div class="container py-12 grid gap-8 md:grid-cols-3">
-  <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
-    <h3 class="text-xl font-semibold mb-3">Enlaces de promoción</h3>
-    <p class="text-gray-400">Comparte enlaces personalizados y recibe tus comisiones.</p>
-  </div>
-  <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
-    <h3 class="text-xl font-semibold mb-3">Tus estadísticas</h3>
-    <p class="text-gray-400">Mide tu impacto y el alcance de tus promociones.</p>
-  </div>
+<div class="container mx-auto py-10 px-4 space-y-10">
+
+  <!-- 1) Control de precio + link de referido -->
+  <section class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
+      <h2 class="text-xl font-bold text-white mb-3">💲 Precio de tu suscripción</h2>
+      <p class="text-sm text-gray-300 mb-4">Mínimo permitido: <b>750</b>. Tu comisión = <code>precio - 750</code>.</p>
+
+      <form id="formPrecio" class="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+        <label class="w-full">
+          <span class="block text-gray-300 text-sm mb-1">Precio mensual</span>
+          <input id="precioInput" type="number" min="750" step="10"
+                 class="w-full px-4 py-3 rounded-xl bg-black/40 text-white outline-none border border-white/10 focus:border-white/30"
+                 placeholder="Ej: 950" required />
+        </label>
+        <button class="px-5 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white transition">
+          Guardar precio
+        </button>
+      </form>
+
+      <p class="mt-3 text-gray-300 text-sm">
+        Comisión estimada: <b id="comisionPreview">—</b>
+      </p>
+    </div>
+
+    <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-lg">
+      <h3 class="text-lg font-semibold text-white mb-2">🔗 Enlace de referido</h3>
+      <p class="text-sm text-gray-300">Compartí este link para que te acrediten las ventas.</p>
+      <div class="mt-3 flex gap-2">
+        <input id="refLink" type="text" readonly class="flex-1 px-3 py-2 rounded-lg bg-black/40 text-white border border-white/10">
+        <button id="copyRef" class="px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white">Copiar</button>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-3 text-sm">
+        <a id="shareWA" class="hover:underline text-green-400" target="_blank">WhatsApp</a>
+        <a id="shareTW" class="hover:underline text-blue-400" target="_blank">Twitter</a>
+        <a id="shareTG" class="hover:underline text-cyan-300" target="_blank">Telegram</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2) Métricas -->
+  <section>
+    <h2 class="text-2xl font-bold text-white mb-4">📊 Tus métricas</h2>
+    <div class="grid md:grid-cols-4 gap-6">
+      <div class="bg-white/10 rounded-2xl p-6 text-center shadow-lg hover:scale-[1.02] transition">
+        <p class="text-sm text-gray-300">Creadores captados</p>
+        <h3 id="mCreadores" class="text-3xl font-bold text-green-400">0</h3>
+      </div>
+      <div class="bg-white/10 rounded-2xl p-6 text-center shadow-lg hover:scale-[1.02] transition">
+        <p class="text-sm text-gray-300">Usuarios referidos</p>
+        <h3 id="mReferidos" class="text-3xl font-bold text-blue-400">0</h3>
+      </div>
+      <div class="bg-white/10 rounded-2xl p-6 text-center shadow-lg hover:scale-[1.02] transition">
+        <p class="text-sm text-gray-300">Comisión acumulada</p>
+        <h3 id="mIngresos" class="text-3xl font-bold text-yellow-300">$0</h3>
+      </div>
+      <div class="bg-white/10 rounded-2xl p-6 text-center shadow-lg hover:scale-[1.02] transition">
+        <p class="text-sm text-gray-300">Ranking interno</p>
+        <h3 id="mRanking" class="text-3xl font-bold text-pink-400">—</h3>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3) Herramientas de captación -->
+  <section>
+    <h2 class="text-2xl font-bold text-white mb-4">🛠️ Herramientas de captación</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
+        <h3 class="text-lg font-semibold mb-2">Códigos / enlaces</h3>
+        <p class="text-sm text-gray-400">Tu enlace único de invitación está arriba. ¡Compartilo!</p>
+      </div>
+      <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
+        <h3 class="text-lg font-semibold mb-2">Material promocional</h3>
+        <p class="text-sm text-gray-400">Descargá banners e imágenes listas para redes.</p>
+        <a href="{{ url_for('static', filename='media/pack-promotor.zip') }}"
+           class="mt-3 inline-block px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">⬇ Descargar</a>
+      </div>
+      <div class="bg-secondary rounded-2xl shadow-card p-6 hover:shadow-glow transition">
+        <h3 class="text-lg font-semibold mb-2">Landing personal</h3>
+        <p class="text-sm text-gray-400">Tu mini landing pública para captar creadores.</p>
+        <a id="linkPublico" target="_blank" class="mt-3 inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Ver mi landing</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4) Gamificación -->
+  <section>
+    <h2 class="text-2xl font-bold text-white mb-4">🏆 Gamificación</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="bg-white/10 rounded-2xl p-6 text-center shadow-lg">
+        <p class="text-gray-300">Nivel</p>
+        <h3 id="nivel" class="text-2xl font-bold text-indigo-400">Principiante</h3>
+      </div>
+      <div class="bg-white/10 rounded-2xl p-6 text-center shadow-lg">
+        <p class="text-gray-300">Logros</p>
+        <h3 id="logrosCount" class="text-2xl font-bold text-green-400">0</h3>
+      </div>
+      <div class="bg-white/10 rounded-2xl p-6 text-center shadow-lg">
+        <p class="text-gray-300">Desafío semanal</p>
+        <h3 class="text-lg font-semibold text-pink-400">Captar 5 creadores</h3>
+        <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+          <div id="progresoDesafio" class="bg-pink-500 h-2 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5) Últimas ventas -->
+  <section>
+    <h2 class="text-2xl font-bold text-white mb-4">🧾 Últimas ventas</h2>
+    <div id="ventasList" class="grid gap-3"></div>
+    <p id="ventasEmpty" class="text-gray-400 text-sm">Aún no registrás ventas.</p>
+  </section>
+
+  <!-- 6) Explorar Creadores -->
+  <section class="bg-white/10 rounded-2xl p-6 shadow-lg">
+    <h2 class="text-2xl font-bold text-white mb-4">🌟 Creadores disponibles para promocionar</h2>
+    <div id="creatorsList" class="grid gap-4"></div>
+  </section>
+
+  <!-- 7) Material de apoyo -->
+  <section class="bg-white/10 rounded-2xl p-6 shadow-lg">
+    <h2 class="text-2xl font-bold text-white mb-4">📂 Material de apoyo</h2>
+    <div id="resourcesList" class="grid gap-3"></div>
+  </section>
+
+  <!-- 8) Comprar / Probar checkout -->
+  <section class="bg-white/10 rounded-2xl p-6 shadow-lg">
+    <h2 class="text-xl font-bold text-white mb-3">🧪 Probar checkout de suscripción</h2>
+    <p class="text-sm text-gray-300 mb-3">Genera el checkout con tu precio actual para validar el flujo.</p>
+    <button id="btnComprar" class="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition">
+      💳 Comprar suscripción
+    </button>
+    <p class="text-xs text-gray-400 mt-2">Requiere que tu backend tenga el endpoint <code>POST /checkout</code> que crea la preferencia de Mercado Pago.</p>
+  </section>
+
 </div>
+
+<!-- SDK Mercado Pago -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+
+<!-- Firebase Frontend -->
+<script type="module">
+  // === Config ===
+  const FIJO_EMPRESA = 750;
+  const promotorId = "{{ (user and user.uid) or '' }}";
+  const basePublicUrl = "{{ request.url_root|trim }}".replace(/\/+$/, '');
+
+  // === Mercado Pago ===
+  const metaPK = document.querySelector('meta[name="mp-public-key"]');
+  const MP_PUBLIC_KEY = metaPK ? metaPK.content : "";
+  let mp = null;
+  if (MP_PUBLIC_KEY) {
+    try { mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'es-UY' }); } catch(e) { console.warn(e); }
+  }
+
+  // === Firebase ===
+  import { auth, db } from "{{ url_for('static', filename='js/firebase-config.js') }}";
+  import {
+    doc, getDoc, setDoc, updateDoc, increment,
+    collection, query, where, orderBy, limit, getDocs, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // Helpers
+  const asMoney = v => new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU' }).format(v||0);
+
+  // Refs
+  const precioInput = document.getElementById('precioInput');
+  const comisionPreview = document.getElementById('comisionPreview');
+  const refInput = document.getElementById('refLink');
+  const btnCopyRef = document.getElementById('copyRef');
+  const btnSharePerfil = document.getElementById('btnSharePerfil');
+  const btnEmail = document.getElementById('btnEmail');
+  const btnWhatsapp = document.getElementById('btnWhatsapp');
+  const linkPublico = document.getElementById('linkPublico');
+  const ventasList = document.getElementById('ventasList');
+  const ventasEmpty = document.getElementById('ventasEmpty');
+  const btnComprar = document.getElementById('btnComprar');
+  const mCreadores = document.getElementById('mCreadores');
+  const mReferidos = document.getElementById('mReferidos');
+  const mIngresos = document.getElementById('mIngresos');
+  const mRanking = document.getElementById('mRanking');
+  const pfp = document.getElementById('pfp');
+  const promotorNombre = document.getElementById('promotorNombre');
+  const promotorBio = document.getElementById('promotorBio');
+  const nivel = document.getElementById('nivel');
+  const logrosCount = document.getElementById('logrosCount');
+  const progresoDesafio = document.getElementById('progresoDesafio');
+  const creatorsList = document.getElementById('creatorsList');
+  const resourcesList = document.getElementById('resourcesList');
+
+  async function ensurePromotor() {
+    if (!promotorId) return null;
+    const ref = doc(db, 'promotores', promotorId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        nombre: "{{ (user and (user.full_name or user.username)) or 'Promotor' }}",
+        email: "{{ (user and user.email) or '' }}",
+        whatsapp: "",
+        fotoPerfil: "",
+        bio: "",
+        linkPerfil: `${basePublicUrl}/p/${promotorId}`,
+        linkInvitacion: `${basePublicUrl}/?ref=${promotorId}`,
+        precioSuscripcion: 950,
+        comisionesAcumuladas: 0,
+        totalVentas: 0,
+        totalReferidos: 0,
+        totalCreadores: 0,
+        nivel: "Principiante",
+        logros: [],
+        progresoDesafio: 0,
+        estado: "activo",
+        fechaRegistro: serverTimestamp()
+      });
+      return (await getDoc(ref)).data();
+    }
+    return snap.data();
+  }
+
+  async function loadData() {
+    if (!promotorId) return;
+    const data = await ensurePromotor();
+
+    // Perfil
+    pfp.src = data.fotoPerfil || pfp.src;
+    promotorNombre.textContent = data.nombre || 'Promotor';
+    promotorBio.textContent = data.bio || 'Agregá tu bio profesional con logros y emojis 🚀✨';
+    btnEmail.href = data.email ? `mailto:${data.email}` : '#';
+    btnWhatsapp.href = data.whatsapp ? `https://wa.me/${data.whatsapp}` : '#';
+    linkPublico.href = data.linkPerfil || `${basePublicUrl}/p/${promotorId}`;
+
+    // Precio
+    precioInput.value = data.precioSuscripcion || 950;
+    comisionPreview.textContent = asMoney(Math.max(0, (data.precioSuscripcion||0) - FIJO_EMPRESA));
+
+    // Ref link
+    const refUrl = data.linkInvitacion || `${basePublicUrl}/?ref=${promotorId}`;
+    refInput.value = refUrl;
+    document.getElementById('shareWA').href = `https://wa.me/?text=${encodeURIComponent(refUrl)}`;
+    document.getElementById('shareTW').href = `https://twitter.com/intent/tweet?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent('Sumate a PlayTimeUY')}`;
+    document.getElementById('shareTG').href = `https://t.me/share/url?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent('Sumate a PlayTimeUY')}`;
+
+    // Métricas
+    mCreadores.textContent = data.totalCreadores || 0;
+    mReferidos.textContent = data.totalReferidos || 0;
+    mIngresos.textContent = asMoney(data.comisionesAcumuladas || 0);
+    mRanking.textContent = data.ranking || '—';
+    nivel.textContent = data.nivel || 'Principiante';
+    logrosCount.textContent = (data.logros || []).length;
+    progresoDesafio.style.width = `${data.progresoDesafio || 0}%`;
+
+    // Ventas
+    ventasList.innerHTML = '';
+    const q = query(
+      collection(db, 'ventas'),
+      where('promotorId', '==', promotorId),
+      orderBy('fecha', 'desc'),
+      limit(10)
+    );
+    const qs = await getDocs(q);
+    if (qs.empty) {
+      ventasEmpty.classList.remove('hidden');
+    } else {
+      ventasEmpty.classList.add('hidden');
+      qs.forEach(docu => {
+        const v = docu.data();
+        const row = document.createElement('div');
+        row.className = 'bg-black/30 border border-white/10 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3';
+        row.innerHTML = `
+          <div class="text-sm text-gray-300">
+            <div>Venta: <b>${asMoney(v.precioVenta)}</b> · Comisión: <b>${asMoney(v.comisionPromotor)}</b></div>
+            <div class="text-xs text-gray-400">Estado: ${v.estadoPago || '—'} · MP ID: ${v.mp_payment_id || '—'}</div>
+          </div>
+          <div class="text-xs text-gray-400">${v.fecha?.toDate ? v.fecha.toDate().toLocaleString() : ''}</div>
+        `;
+        ventasList.appendChild(row);
+      });
+    }
+
+    // Creadores disponibles
+    const creatorsSnap = await getDocs(collection(db, "creadores"));
+    creatorsList.innerHTML = "";
+    creatorsSnap.forEach(cDoc => {
+      const c = cDoc.data();
+      const card = document.createElement('div');
+      card.className = "bg-black/30 p-4 rounded flex items-center gap-3";
+      card.innerHTML = `
+        <img src="${c.photoUrl||'/static/img/default.png'}" class="h-16 w-16 rounded-full"/>
+        <div class="flex-1">
+          <h3 class="text-white font-bold">${c.full_name||c.username}</h3>
+          <p class="text-sm text-gray-300">💲${c.precioVenta} / mes</p>
+        </div>
+        <button class="bg-blue-500 text-white px-3 py-1 rounded"
+          onclick="generatePromoLink('${cDoc.id}')">Generar link</button>
+      `;
+      creatorsList.appendChild(card);
+    });
+
+    // Recursos oficiales
+    const recursosSnap = await getDocs(collection(db, "recursos"));
+    resourcesList.innerHTML = "";
+    recursosSnap.forEach(rDoc => {
+      const r = rDoc.data();
+      const item = document.createElement('div');
+      item.className = "bg-black/40 p-3 rounded flex justify-between";
+      item.innerHTML = `
+        <span class="text-white">${r.titulo}</span>
+        <a href="${r.url}" target="_blank" class="text-blue-400 underline">Descargar</a>
+      `;
+      resourcesList.appendChild(item);
+    });
+  }
+
+  // Generar link promo
+  window.generatePromoLink = (creatorId) => {
+    const promoLink = `${window.location.origin}/p/${promotorId}?c=${creatorId}`;
+    navigator.clipboard.writeText(promoLink);
+    alert("✅ Link copiado: " + promoLink);
+  };
+
+  // Guardar precio
+  document.getElementById('formPrecio').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!promotorId) return;
+    const precio = Number(precioInput.value || 0);
+    if (precio < FIJO_EMPRESA) {
+      alert('El precio mínimo es 750.');
+      return;
+    }
+    await updateDoc(doc(db, 'promotores', promotorId), { precioSuscripcion: precio });
+    comisionPreview.textContent = asMoney(precio - FIJO_EMPRESA);
+    alert('✅ Precio actualizado');
+  });
+
+  // Copiar link
+  btnCopyRef.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(refInput.value);
+    btnCopyRef.textContent = '¡Copiado!';
+    setTimeout(() => btnCopyRef.textContent = 'Copiar', 1200);
+  });
+
+  // Compartir perfil
+  btnSharePerfil.addEventListener('click', async () => {
+    const link = `${basePublicUrl}/p/${promotorId}`;
+    await navigator.clipboard.writeText(link);
+    btnSharePerfil.textContent = '¡Link copiado!';
+    setTimeout(() => btnSharePerfil.textContent = 'Compartir mi perfil', 1400);
+  });
+
+  // Checkout
+  btnComprar.addEventListener('click', async () => {
+    if (!mp) {
+      alert('Mercado Pago no está configurado.');
+      return;
+    }
+    const precio = Number(precioInput.value || 0);
+    if (precio < FIJO_EMPRESA) {
+      alert('El precio mínimo es 750.');
+      return;
+    }
+    try {
+      const res = await fetch("{{ url_for('main.checkout') if has_endpoint('main.checkout') else '/checkout' }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Suscripción PlayTimeUY',
+          quantity: 1,
+          unit_price: precio,
+          promotorId: promotorId,
+          external_reference: promotorId
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'No se pudo crear preferencia');
+
+      const prefId = data.preference && (data.preference.id || data.preference.response?.id) || data.id;
+      if (!prefId) throw new Error('No llegó preference_id');
+
+      mp.checkout({
+        preference: { id: prefId },
+        autoOpen: true,
+      });
+    } catch (e) {
+      console.error(e);
+      alert('Error creando el checkout.');
+    }
+  });
+
+  // Inicio
+  await loadData();
+</script>
 {% endblock %}

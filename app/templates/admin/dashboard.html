@@ -8,57 +8,33 @@
         <h2 class="text-3xl md:text-4xl font-extrabold text-white text-center mb-4 animate-fade-in-down">Bienvenido/a a tu Panel</h2>
         <p class="text-lg text-gray-200 text-center mb-8">Aquí puedes acceder a tus funciones según tu tipo de cuenta.</p>
 
-        {% if session.role == 'creator' %}
+        {% if session.get('role') == 'creator' %}
             <div class="grid md:grid-cols-2 gap-6">
-                <a href="/subir-contenido" class="dashboard-card">
-                    📸 Subir Contenido
-                </a>
-                <a href="/perfil" class="dashboard-card">
-                    👤 Editar Perfil
-                </a>
-                <a href="/estadisticas" class="dashboard-card">
-                    📊 Ver Estadísticas
-                </a>
-                <a href="/mensajes" class="dashboard-card">
-                    💬 Mensajes de Fans
-                </a>
+                <a href="{{ url_for('main.upload_content') }}" class="dashboard-card">📸 Subir Contenido</a>
+                <a href="{{ url_for('main.edit_profile') }}" class="dashboard-card">👤 Editar Perfil</a>
+                <a href="{{ url_for('main.stats') }}" class="dashboard-card">📊 Ver Estadísticas</a>
+                <a href="{{ url_for('main.messages') }}" class="dashboard-card">💬 Mensajes de Fans</a>
             </div>
-        {% elif session.role == 'buyer' %}
+        {% elif session.get('role') == 'buyer' %}
             <div class="grid md:grid-cols-2 gap-6">
-                <a href="/creadoras" class="dashboard-card">
-                    🔥 Ver Creadoras
-                </a>
-                <a href="/suscripciones" class="dashboard-card">
-                    💎 Mis Suscripciones
-                </a>
-                <a href="/perfil" class="dashboard-card">
-                    👤 Mi Perfil
-                </a>
-                <a href="/notificaciones" class="dashboard-card">
-                    🔔 Notificaciones
-                </a>
+                <a href="{{ url_for('main.creators') }}" class="dashboard-card">🔥 Ver Creadoras</a>
+                <a href="{{ url_for('main.subscriptions') }}" class="dashboard-card">💎 Mis Suscripciones</a>
+                <a href="{{ url_for('main.profile') }}" class="dashboard-card">👤 Mi Perfil</a>
+                <a href="{{ url_for('main.notifications') }}" class="dashboard-card">🔔 Notificaciones</a>
             </div>
-        {% elif session.is_admin %}
+        {% elif session.get('is_admin') %}
             <div class="grid md:grid-cols-2 gap-6">
-                <a href="/admin/usuarios" class="dashboard-card">
-                    👥 Gestionar Usuarios
-                </a>
-                <a href="/admin/suscripciones" class="dashboard-card">
-                    📄 Control de Suscripciones
-                </a>
-                <a href="/admin/ingresos" class="dashboard-card">
-                    💰 Reporte de Ingresos
-                </a>
-                <a href="/admin/campañas" class="dashboard-card">
-                    📢 Campañas y Sorteos
-                </a>
+                <a href="{{ url_for('admin.users') }}" class="dashboard-card">👥 Gestionar Usuarios</a>
+                <a href="{{ url_for('admin.subscriptions') }}" class="dashboard-card">📄 Control de Suscripciones</a>
+                <a href="{{ url_for('admin.revenue') }}" class="dashboard-card">💰 Reporte de Ingresos</a>
+                <a href="{{ url_for('admin.campaigns') }}" class="dashboard-card">📢 Campañas y Sorteos</a>
             </div>
         {% else %}
             <p class="text-white text-center">No se reconoció tu rol. Por favor inicia sesión nuevamente.</p>
         {% endif %}
 
         <div class="text-center mt-10">
-            <a href="{{ url_for('logout') }}" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl transition-all duration-300">Cerrar sesión</a>
+            <a href="{{ url_for('main.logout') }}" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl transition-all duration-300">Cerrar sesión</a>
         </div>
     </div>
 </div>
@@ -66,23 +42,17 @@
 
 {% block styles %}
 <style>
-    .dashboard-card {
-        @apply flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold text-lg py-6 rounded-2xl shadow-md hover:bg-white/20 transition duration-300 ease-in-out;
-    }
+.dashboard-card {
+    @apply flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold text-lg py-6 rounded-2xl shadow-md hover:bg-white/20 transition duration-300 ease-in-out;
+}
 
-    @keyframes fade-in-down {
-        0% {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+@keyframes fade-in-down {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
 
-    .animate-fade-in-down {
-        animation: fade-in-down 0.7s ease-out;
-    }
+.animate-fade-in-down {
+    animation: fade-in-down 0.7s ease-out;
+}
 </style>
 {% endblock %}

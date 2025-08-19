@@ -1,20 +1,31 @@
 import os
+import logging
 from app import create_app
 
-# -------------------------------
-# Crear la instancia de Flask
-# -------------------------------
+# =========================================================
+# Configuración de Logging
+# =========================================================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
+# =========================================================
+# Crear la instancia de Flask (Factory Pattern)
+# =========================================================
 app = create_app()
 
-# -------------------------------
+# =========================================================
 # Ejecutar solo si es script principal
-# -------------------------------
+# =========================================================
 if __name__ == "__main__":
     # -------------------------------
-    # Configuración de debug
+    # Configuración de entorno
     # -------------------------------
-    debug_env = os.getenv("FLASK_DEBUG", "true").strip().lower()
-    debug_mode = debug_env in {"1", "true", "yes"}
+    env = os.getenv("FLASK_ENV", "production").strip().lower()
+
+    debug_env = os.getenv("FLASK_DEBUG", "false").strip().lower()
+    debug_mode = debug_env in {"1", "true", "yes"} and env != "production"
 
     # -------------------------------
     # Configuración de puerto
@@ -25,22 +36,23 @@ if __name__ == "__main__":
         if not (1 <= port <= 65535):
             raise ValueError(f"Puerto fuera de rango: {port}")
     except ValueError:
-        print(f"⚠️  Variable PORT inválida ('{port_env}'), usando 5000 por defecto")
+        logging.warning(f"⚠️  Variable PORT inválida ('{port_env}'), usando 5000 por defecto")
         port = 5000
 
     # -------------------------------
     # Configuración de host
     # -------------------------------
-    host = os.getenv("FLASK_RUN_HOST", "127.0.0.1").strip() or "127.0.0.1"
+    host = os.getenv("FLASK_RUN_HOST", "0.0.0.0").strip() or "0.0.0.0"
 
     # -------------------------------
     # Mensaje inicial
     # -------------------------------
-    print("=" * 50)
-    print(f"🚀 Corriendo Flask App")
-    print(f"🔹 Host: http://{host}:{port}")
-    print(f"🔹 Debug: {debug_mode}")
-    print("=" * 50)
+    logging.info("=" * 60)
+    logging.info("🚀 Iniciando aplicación Flask")
+    logging.info(f"🔹 Entorno: {env}")
+    logging.info(f"🔹 Host: http://{host}:{port}")
+    logging.info(f"🔹 Debug: {debug_mode}")
+    logging.info("=" * 60)
 
     # -------------------------------
     # Ejecutar servidor Flask
@@ -48,4 +60,5 @@ if __name__ == "__main__":
     try:
         app.run(debug=debug_mode, host=host, port=port)
     except Exception as e:
-        print("❌ Error iniciando el servidor:", e)
+        logging.error("❌ Error iniciando el servidor", exc_info=e)
+        raise

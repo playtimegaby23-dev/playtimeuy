@@ -1,17 +1,44 @@
+# =========================================================
+# DEPENDENCIAS PRINCIPALES
+# =========================================================
+
+Flask==3.0.3                # Framework web principal
+gunicorn==21.2.0            # Servidor WSGI para producción
+python-dotenv==1.0.1        # Manejo de variables de entorno (.env)
+
+
+# =========================================================
+# FIREBASE
+# =========================================================
+
+firebase-admin==6.5.0       # SDK Admin (backend)
+pyrebase5==5.0.1            # Cliente Firebase (login/registro, front-end con JS)
+
+
+# =========================================================
+# UTILIDADES FLASK
+# =========================================================
+
+itsdangerous>=2.1.2         # Seguridad (tokens firmados)
+Jinja2==3.1.3               # Motor de plantillas de Flask
+MarkupSafe>=3.0.2           # Seguridad para plantillas
+Werkzeug==3.0.1             # WSGI core de Flask
+requests>=2.31.0,<3.0       # HTTP requests (corregido a versión segura)
+
+
+# =========================================================
+# MANEJO DE IMÁGENES
+# =========================================================
+
+Pillow==10.4.0              # Procesamiento de imágenes
+
+
+# =========================================================
+# TORCH (CPU ONLY) - IA/MODELOS
+# =========================================================
+
 --only-binary=:all:
 --extra-index-url https://download.pytorch.org/whl/cpu
 
 torch==2.7.1+cpu
 torchvision==0.22.1+cpu
-
-Flask==3.0.3
-firebase-admin==6.5.0
-gunicorn==21.2.0
-itsdangerous>=2.1.2
-Jinja2==3.1.3
-MarkupSafe>=3.0.2
-Werkzeug==3.0.1
-pyrebase5==5.0.1
-requests>=2.19.1,<2.30
-Pillow==10.4.0
-python-dotenv==1.0.1
