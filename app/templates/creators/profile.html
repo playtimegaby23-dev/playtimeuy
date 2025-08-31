@@ -1,0 +1,260 @@
+{# profile.html - Perfil público del creador (OnlyFans/Fansly-like) #}
+{% extends "base.html" %}
+{% block title %}Perfil de {{ creator_username if creator_username is defined else '' }}{% endblock %}
+
+{% block content %}
+<div id="creator-profile" class="max-w-6xl mx-auto px-4 md:px-6 py-6">
+  <!-- Cover -->
+  <div class="relative rounded-2xl overflow-hidden bg-gray-900/5">
+    <img id="coverImage" src="/static/img/placeholder-cover.jpg" alt="cover" class="w-full h-56 md:h-72 object-cover">
+    <div class="absolute -bottom-14 left-6 md:left-10 flex items-end gap-4">
+      <img id="avatarImage" src="/static/img/placeholder-avatar.png" alt="avatar"
+           class="w-28 h-28 md:w-32 md:h-32 rounded-full ring-4 ring-white object-cover shadow-xl">
+      <div id="headerInfo" class="backdrop-blur-md bg-white/80 dark:bg-black/30 px-4 py-2 rounded-2xl shadow-md">
+        <div class="flex items-center gap-3">
+          <h1 id="displayName" class="text-lg md:text-2xl font-bold">Creator</h1>
+          <span id="verifiedBadge" class="hidden inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-blue-600 text-white">Verificado</span>
+        </div>
+        <p id="username" class="text-sm text-gray-600">@username</p>
+        <p id="onlineStatus" class="text-xs text-emerald-600 mt-0.5 hidden">● en línea</p>
+      </div>
+    </div>
+
+    <div class="absolute top-4 right-4 flex gap-2">
+      <button id="shareBtn" class="px-3 py-2 rounded-xl bg-white text-gray-900 shadow hover:shadow-lg text-sm">Compartir</button>
+      <button id="reportBtn" class="px-3 py-2 rounded-xl bg-white/70 text-gray-800 hover:bg-white text-sm">Reportar</button>
+    </div>
+  </div>
+
+  <!-- Info + Acciones -->
+  <div class="mt-24 md:mt-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="md:col-span-2">
+      <p id="bio" class="text-gray-700 dark:text-gray-300 leading-relaxed"></p>
+
+      <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+        <span id="statsSubscribers" class="inline-flex items-center gap-2">👥 <b class="font-semibold">0</b> suscriptores</span>
+        <span id="statsLikes" class="inline-flex items-center gap-2">❤️ <b class="font-semibold">0</b> likes</span>
+        <span id="statsPosts" class="inline-flex items-center gap-2">🗂️ <b class="font-semibold">0</b> posts</span>
+        <span id="rankBadge" class="hidden inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white">💎 Top</span>
+      </div>
+
+      <div id="socialLinks" class="mt-4 flex gap-3"></div>
+    </div>
+
+    <div class="md:col-span-1">
+      <div class="rounded-2xl border bg-white/70 dark:bg-white/5 dark:border-white/10 p-4 shadow-sm">
+        <div class="flex items-end justify-between">
+          <div>
+            <p class="text-sm text-gray-500">Suscripción mensual</p>
+            <p id="priceLabel" class="text-2xl font-bold">UYU 0</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-gray-500">Bundles</p>
+            <button id="bundlesBtn" class="text-sm underline hover:opacity-80">ver ofertas</button>
+          </div>
+        </div>
+
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <button id="subscribeBtn" class="col-span-2 bg-pink-600 hover:bg-pink-700 text-white py-2.5 rounded-xl font-semibold shadow">Suscribirse</button>
+          <button id="followBtn" class="bg-gray-100 hover:bg-gray-200 dark:bg-white/10 py-2 rounded-xl">Seguir</button>
+          <button id="messageBtn" class="bg-gray-100 hover:bg-gray-200 dark:bg-white/10 py-2 rounded-xl">Mensaje</button>
+        </div>
+
+        <button id="tipBtn" class="mt-3 w-full py-2 rounded-xl border hover:bg-gray-50 dark:hover:bg-white/10">Dar propina 💸</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mt-8 border-b border-gray-200 dark:border-white/10 flex gap-6 overflow-x-auto">
+    <button data-tab="all" class="tab-btn active border-b-2 border-pink-600 text-pink-600 font-semibold py-2">Todos</button>
+    <button data-tab="photos" class="tab-btn py-2 text-gray-600">Fotos</button>
+    <button data-tab="videos" class="tab-btn py-2 text-gray-600">Videos</button>
+    <button data-tab="locked" class="tab-btn py-2 text-gray-600">🔒 Premium</button>
+    <button data-tab="bundles" class="tab-btn py-2 text-gray-600">Bundles</button>
+  </div>
+
+  <!-- Grid de Posts -->
+  <div id="postsGrid" class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+
+  <!-- Muestras gratis -->
+  <div id="freeSamples" class="mt-10 hidden">
+    <h3 class="text-lg font-semibold mb-3">Muestras gratis</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="samplesGrid"></div>
+  </div>
+</div>
+
+{# Incluimos modales separados para mantener orden #}
+{% include 'creators/profile_modals.html' %}
+
+<script type="module">
+  import { db } from "/static/js/firebase-config.js";
+  import {
+    doc, getDoc, collection, query, where, getDocs, orderBy, limit,
+    addDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // Username que sirve para buscar el creator (lo pasa Jinja desde Flask)
+  const CREATOR_USERNAME = "{{ creator_username if creator_username is defined else request.args.get('u','') }}".trim() || "demo_creator";
+  const CURRENT_USER_ID = "{{ session.get('user','') }}";
+
+  const state = { creatorId: null, isSubscribed: false, price: 0 };
+
+  const $ = id => document.getElementById(id);
+  function moneyUYU(v){ try { return new Intl.NumberFormat('es-UY',{style:'currency',currency:'UYU'}).format(v); } catch { return `UYU ${v}`; } }
+
+  // Carga creator por username
+  async function loadCreator(){
+    const creatorsRef = collection(db,'creators');
+    const q = query(creatorsRef, where('username','==', CREATOR_USERNAME), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      console.warn('Creator no encontrado:', CREATOR_USERNAME);
+      return;
+    }
+    const d = snap.docs[0];
+    state.creatorId = d.id;
+    const data = d.data();
+
+    $('displayName').textContent = data.displayName || data.username;
+    $('username').textContent = `@${data.username}`;
+    $('bio').textContent = data.bio || '';
+    $('avatarImage').src = data.avatarUrl || '/static/img/placeholder-avatar.png';
+    $('coverImage').src = data.coverUrl || '/static/img/placeholder-cover.jpg';
+    $('verifiedBadge').classList.toggle('hidden', !data.verified);
+    if (data.isOnline) $('onlineStatus').classList.remove('hidden');
+
+    $('priceLabel').textContent = data.subscriptionPrice ? moneyUYU(data.subscriptionPrice) : 'Gratis';
+    state.price = Number(data.subscriptionPrice || 0);
+
+    // Stats
+    $('statsSubscribers').querySelector('b').textContent = data.subscribers || 0;
+    $('statsLikes').querySelector('b').textContent = data.likes || 0;
+    $('statsPosts').querySelector('b').textContent = data.postsCount || 0;
+
+    // Social links
+    const socialWrap = $('socialLinks');
+    socialWrap.innerHTML = '';
+    const social = data.socialLinks || {};
+    const map = { instagram:'Instagram', twitter:'X', tiktok:'TikTok', link:'Link' };
+    Object.entries(social).forEach(([k,v])=>{
+      if (!v) return;
+      const a = document.createElement('a');
+      a.href = v; a.target = '_blank';
+      a.className = 'px-3 py-1 rounded-xl border text-sm hover:bg-gray-50 dark:hover:bg-white/10';
+      a.textContent = map[k] || k;
+      socialWrap.appendChild(a);
+    });
+
+    // Make creatorId accessible to modals/scripts
+    window.__creatorId = state.creatorId;
+  }
+
+  // Carga posts del creator
+  async function loadPosts(filter='all'){
+    if (!state.creatorId) return;
+    const postsRef = collection(db,'posts');
+    // Query: creatorId == state.creatorId
+    const q = query(postsRef, where('creatorId','==', state.creatorId), orderBy('createdAt','desc'));
+    const snap = await getDocs(q);
+    const grid = $('postsGrid');
+    grid.innerHTML = '';
+    let count = 0, likesTotal = 0;
+
+    snap.forEach(d => {
+      const p = d.data();
+      if (filter==='photos' && p.type!=='image') return;
+      if (filter==='videos' && p.type!=='video') return;
+      if (filter==='locked' && !p.premium) return; // show only locked
+      count++; likesTotal += (p.likes || 0);
+
+      const card = document.createElement('article');
+      card.className = 'group relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-white/5 shadow';
+
+      const locked = p.premium && !state.isSubscribed;
+      const media = p.type==='video'
+        ? `<video src="${p.mediaUrl}" class="w-full h-56 object-cover" ${locked?'':'controls'} muted playsinline></video>`
+        : `<img src="${p.mediaUrl}" class="w-full h-56 object-cover" alt="post">`;
+
+      card.innerHTML = `
+        <div class="relative">${media}
+          ${locked ? `<div class='absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center text-white font-semibold'>🔒 Contenido premium – Suscribite</div>` : ''}
+        </div>
+        <div class="p-3 flex items-center justify-between">
+          <p class="text-sm line-clamp-1">${p.caption || ''}</p>
+          <div class="text-xs text-gray-500">❤️ ${p.likes || 0}</div>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    $('statsPosts').querySelector('b').textContent = count;
+    $('statsLikes').querySelector('b').textContent = likesTotal;
+  }
+
+  // Revisa suscripción activa
+  async function checkSubscription(){
+    if (!CURRENT_USER_ID || !state.creatorId) return false;
+    const subsRef = collection(db,'subscriptions');
+    const q = query(subsRef, where('userId','==', CURRENT_USER_ID), where('creatorId','==', state.creatorId), where('active','==', true), limit(1));
+    const s = await getDocs(q);
+    state.isSubscribed = !s.empty;
+    $('subscribeBtn').textContent = state.isSubscribed ? 'Gestionar suscripción' : 'Suscribirse';
+    return state.isSubscribed;
+  }
+
+  // Events
+  $('subscribeBtn').addEventListener('click', async ()=>{
+    if (!CURRENT_USER_ID) { alert('Iniciá sesión para suscribirte.'); return; }
+    // Llamamos backend que crea preferencia MP con la cuenta del creator
+    try {
+      const res = await fetch('/api/creator/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creatorId: state.creatorId, price: state.price })
+      });
+      const js = await res.json();
+      if (!js.ok) { alert(js.error || 'No se pudo iniciar el pago'); return; }
+      // Preferencia devuelta (init_point) -> redirigir al checkout de MP
+      if (js.init_point) {
+        window.location.href = js.init_point;
+      } else if (js.preference && js.preference.init_point) {
+        window.location.href = js.preference.init_point;
+      } else {
+        alert('Pago listo, pero no se recibió link de pago.');
+      }
+    } catch (e) {
+      console.error(e); alert('Error al iniciar pago.');
+    }
+  });
+
+  $('followBtn').addEventListener('click', async ()=>{
+    if (!CURRENT_USER_ID) { alert('Iniciá sesión para seguir.'); return; }
+    await addDoc(collection(db,'follows'), { userId: CURRENT_USER_ID, creatorId: state.creatorId, createdAt: serverTimestamp() });
+    alert('Ahora seguís a este creador.');
+  });
+
+  $('tipBtn').addEventListener('click', ()=> document.getElementById('tipModal').showModal());
+  $('messageBtn').addEventListener('click', ()=> document.getElementById('messageModal').showModal());
+  $('bundlesBtn').addEventListener('click', ()=> document.getElementById('bundlesModal').showModal());
+  $('shareBtn').addEventListener('click', async ()=>{
+    try { await navigator.share({ title: $('displayName').textContent, url: window.location.href }); } catch { navigator.clipboard.writeText(window.location.href); alert('Link copiado ✔'); }
+  });
+
+  // Tabs behaviour
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active','border-pink-600','text-pink-600','font-semibold'));
+      btn.classList.add('active','border-pink-600','text-pink-600','font-semibold');
+      const t = btn.dataset.tab;
+      loadPosts(t==='all' ? 'all' : t);
+    });
+  });
+
+  // Init
+  (async ()=>{
+    await loadCreator();
+    await checkSubscription();
+    await loadPosts('all');
+  })();
+</script>
+{% endblock %}

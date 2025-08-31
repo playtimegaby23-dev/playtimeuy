@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && request.auth.token.admin == true; }
+
+    // Ventas: SOLO las escribe el backend con Admin SDK (Functions)
+    match /ventas/{ventaId} {
+      allow read: if isSignedIn();   // si querés, poné true para lectura pública de prueba
+      allow write: if false;         // escribir solo desde Admin SDK (Functions)
+    }
+
+    // Promotores (perfil editable por el propio usuario)
+    match /promotores/{promotorId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isSignedIn() && request.auth.uid == promotorId;
+    }
+
+    // Cualquier otro dato (ajustá según tu app)
+    match /{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

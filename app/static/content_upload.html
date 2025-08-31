@@ -1,0 +1,85 @@
+# ────────────────────────────────────────────────────────────────────────
+# CREATOR: Subida de contenido (estilo Fansly) usando /static/content_uploads
+# ────────────────────────────────────────────────────────────────────────
+UPLOAD_DIR = BASE_DIR / "app" / "static" / "content_uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+CONTENTS_FILE = DATA_DIR / "contents.json"
+if not CONTENTS_FILE.exists():
+    CONTENTS_FILE.write_text(json.dumps({}, indent=2, ensure_ascii=False), encoding="utf-8")
+
+def save_content_local(content: dict):
+    data = load_json(CONTENTS_FILE)
+    data[str(uuid.uuid4())] = content
+    save_json(CONTENTS_FILE, data)
+
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "mp4", "mov", "avi", "mp3", "wav"}
+
+def allowed_file(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@main.route("/creator/upload", methods=["GET", "POST"])
+@login_required
+@require_role("creator")
+def creator_upload():
+    if request.method == "POST":
+        file = request.files.get("archivo")
+        descripcion = (request.form.get("descripcion") or "").strip()
+
+        if not file or file.filename == "":
+            flash("Debes seleccionar un archivo.", "danger")
+            return redirect(url_for("main.creator_upload"))
+
+        if not allowed_file(file.filename):
+            flash("Formato de archivo no permitido.", "danger")
+            return redirect(url_for("main.creator_upload"))
+
+        # Guardar archivo en carpeta static/content_uploads
+        ext = file.filename.rsplit(".", 1)[1].lower()
+        filename = f"{uuid.uuid4()}.{ext}"
+        filepath = UPLOAD_DIR / filename
+        file.save(filepath)
+
+        # Documento a guardar
+        content_doc = {
+            "creatorId": session.get("user"),
+            "filename": filename,
+            "descripcion": descripcion,
+            "fecha": now_utc().isoformat(),
+            # URL servida directamente desde /static
+            "url": url_for("static", filename=f"content_uploads/{filename}")
+        }
+
+        try:
+            if USE_FIRESTORE and db:
+                db.collection("contents").add({**content_doc, "created_at": now_utc()})
+            else:
+                save_content_local(content_doc)
+            flash("✅ Contenido subido correctamente.", "success")
+            return redirect(url_for("main.creator_gallery"))
+        except Exception as e:
+            logger.exception("Error subiendo contenido: %s", e)
+            flash("Ocurrió un error al subir el contenido.", "danger")
+
+    return render_template("creators/content_upload.html", user=get_current_user())
+
+
+# ────────────────────────────────────────────────────────────────────────
+# CREATOR: Galería de contenidos
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/creator/gallery")
+@login_required
+@require_role("creator")
+def creator_gallery():
+    contents = []
+    try:
+        if USE_FIRESTORE and db:
+            q = db.collection("contents").where("creatorId", "==", session.get("user")).order_by("created_at").stream()
+            contents = [c.to_dict() for c in q]
+        else:
+            data = load_json(CONTENTS_FILE)
+            contents = [v for v in data.values() if v.get("creatorId") == session.get("user")]
+    except Exception as e:
+        logger.warning("Error cargando galería: %s", e)
+
+    return render_template("creators/gallery.html", contents=contents, user=get_current_user())

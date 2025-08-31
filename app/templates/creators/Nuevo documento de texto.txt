@@ -1,0 +1,1399 @@
+# routes.py
+"""
+Autenticación completa + Panel Promotor funcional + soporte Creadores (perfiles, suscripciones y tips con MP del creator)
+
+Incluye:
+- Registro (email/password) con verificación
+- Login con email o username
+- Google Sign-In (verificación servidor)
+- Firestore como store de perfiles (con fallback local)
+- Reenvío verificación, reset password
+- Dashboard por rol
+- API Promotor (precio, métricas, creadores, link referido)
+- Checkout Mercado Pago + webhook con actualización de ventas, suscripciones y tips
+- Endpoints para crear preferencias MP usando la cuenta del creador
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import json
+import uuid
+import hmac
+import hashlib
+import logging
+from pathlib import Path
+from datetime import timedelta, datetime, timezone
+from functools import wraps
+from typing import Any, Dict, Optional, Tuple, List
+
+from flask import (
+    Blueprint, render_template, request, redirect,
+    url_for, flash, session, current_app, jsonify
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ────────────────────────────────────────────────────────────────────────
+# Blueprint & Logger
+# ────────────────────────────────────────────────────────────────────────
+main = Blueprint("main", __name__)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# ────────────────────────────────────────────────────────────────────────
+# Constantes de negocio
+# ────────────────────────────────────────────────────────────────────────
+FIJO_EMPRESA = 750  # precio base mínimo (UYU)
+
+# ────────────────────────────────────────────────────────────────────────
+# Paths y storage local (fallback)
+# ────────────────────────────────────────────────────────────────────────
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+USERS_FILE         = DATA_DIR / "users.json"
+PROMOTERS_FILE     = DATA_DIR / "promoters.json"
+CREATORS_FILE      = DATA_DIR / "creators.json"
+VENTAS_FILE        = DATA_DIR / "ventas.json"
+WEBHOOK_LOG_FILE   = DATA_DIR / "webhooks_processed.json"
+SUBSCRIPTIONS_FILE = DATA_DIR / "subscriptions.json"
+TIPS_FILE          = DATA_DIR / "tips.json"
+
+for _f in (
+    USERS_FILE, PROMOTERS_FILE, CREATORS_FILE,
+    VENTAS_FILE, WEBHOOK_LOG_FILE, SUBSCRIPTIONS_FILE, TIPS_FILE
+):
+    if not _f.exists():
+        _f.write_text(json.dumps({}, indent=2, ensure_ascii=False), encoding="utf-8")
+
+EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
+USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_.]{3,20}$")
+
+# ────────────────────────────────────────────────────────────────────────
+# Utilidades base (JSON local, dinero, fechas, firmas)
+# ────────────────────────────────────────────────────────────────────────
+def load_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+def save_json(path: Path, data: dict):
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+
+def money(v: Any) -> int:
+    try:
+        return max(0, int(float(v)))
+    except Exception:
+        return 0
+
+def safe_int(v: Any, default: int = 0) -> int:
+    try:
+        return int(v)
+    except Exception:
+        return default
+
+def now_utc() -> datetime:
+    return datetime.now(timezone.utc)
+
+def normalize_email(v: str) -> str:
+    return (v or "").strip().lower()
+
+def sign_payload(secret: bytes, body: bytes) -> str:
+    if not secret:
+        return ""
+    return hmac.new(secret, body, hashlib.sha256).hexdigest()
+
+def parse_iso_datetime(s: Optional[str]) -> Optional[datetime]:
+    if not s:
+        return None
+    try:
+        # Mercado Pago suele devolver con Z
+        s = s.replace("Z", "+00:00")
+        return datetime.fromisoformat(s)
+    except Exception:
+        return None
+
+def choose_estado_from_status(status: Optional[str]) -> str:
+    st = (status or "").lower()
+    if st == "approved":
+        return "aprobado"
+    if st == "rejected":
+        return "rechazado"
+    return "pendiente"
+
+def key_in_dict(d: dict, k: str) -> bool:
+    try:
+        return k in d
+    except Exception:
+        return False
+
+# ────────────────────────────────────────────────────────────────────────
+# Integraciones Firebase
+# ────────────────────────────────────────────────────────────────────────
+FIREBASE_ADMIN_AVAILABLE = False
+USE_FIRESTORE = False
+db = None
+firebase_admin_auth = None
+firestore = None
+
+try:
+    import firebase_admin
+    from firebase_admin import credentials, auth as firebase_admin_auth_module, firestore as firestore_module
+
+    cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if cred_path and os.path.exists(cred_path):
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+        firestore = firestore_module
+        db = firestore.client()
+        firebase_admin_auth = firebase_admin_auth_module
+        FIREBASE_ADMIN_AVAILABLE = True
+        USE_FIRESTORE = True
+        logger.info("[Firebase Admin] Inicializado.")
+    else:
+        logger.warning("[Firebase Admin] GOOGLE_APPLICATION_CREDENTIALS no configurado o inexistente.")
+except Exception as e:
+    logger.warning("[Firebase Admin] No disponible: %s", e)
+
+AUTH_AVAILABLE = False
+firebase_auth = None
+try:
+    import pyrebase
+    firebase_config = {
+        "apiKey": os.getenv("FIREBASE_API_KEY", ""),
+        "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN", ""),
+        "databaseURL": os.getenv("FIREBASE_DATABASE_URL", ""),
+        "projectId": os.getenv("FIREBASE_PROJECT_ID", ""),
+        "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET", ""),
+        "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID", ""),
+        "appId": os.getenv("FIREBASE_APP_ID", ""),
+    }
+    if firebase_config["apiKey"]:
+        firebase = pyrebase.initialize_app(firebase_config)
+        firebase_auth = firebase.auth()
+        AUTH_AVAILABLE = True
+        logger.info("[Pyrebase] Inicializado.")
+    else:
+        logger.warning("[Pyrebase] Sin apiKey, deshabilitado.")
+except Exception as e:
+    logger.warning("[Pyrebase] No disponible: %s", e)
+
+# ────────────────────────────────────────────────────────────────────────
+# Mercado Pago (SDK global - para pagos de la plataforma o fallback)
+# ────────────────────────────────────────────────────────────────────────
+MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "").strip()
+MP_INTEGRATOR_ID = os.getenv("MP_INTEGRATOR_ID", "").strip()
+WEBHOOK_SHARED_SECRET = (os.getenv("WEBHOOK_SHARED_SECRET", "")).encode("utf-8") if os.getenv("WEBHOOK_SHARED_SECRET") else b""
+
+MP_AVAILABLE = False
+sdk = None
+try:
+    from mercadopago import SDK
+    sdk = SDK(MP_ACCESS_TOKEN) if MP_ACCESS_TOKEN else None
+    MP_AVAILABLE = sdk is not None
+    if MP_AVAILABLE and MP_INTEGRATOR_ID:
+        sdk.request_options.custom_headers = {"x-integrator-id": MP_INTEGRATOR_ID}
+    logger.info("[MercadoPago] SDK listo: %s", MP_AVAILABLE)
+except Exception as e:
+    logger.warning("[MercadoPago] No disponible: %s", e)
+
+# ────────────────────────────────────────────────────────────────────────
+# Helpers: storage local, validaciones, Firestore
+# ────────────────────────────────────────────────────────────────────────
+def load_users() -> dict:
+    return load_json(USERS_FILE)
+
+def save_users(users: dict):
+    save_json(USERS_FILE, users)
+
+def create_local_user(email: str, password: str, username: str = "", full_name: str = "", role: str = "buyer", extra: Optional[dict] = None) -> dict:
+    users = load_users()
+    if email in users:
+        raise ValueError("Email ya registrado (local).")
+    local_id = str(uuid.uuid4())
+    users[email] = {
+        "localId": local_id,
+        "email": email,
+        "password_hash": generate_password_hash(password),
+        "username": username or email.split("@")[0],
+        "full_name": full_name,
+        "role": role,
+        "emailVerified": True,
+        "is_admin": False,
+        **(extra or {})
+    }
+    save_users(users)
+    return users[email]
+
+def authenticate_local_user(identity: str, password: str) -> dict:
+    users = load_users()
+    user = users.get(identity)
+    if not user:
+        for u in users.values():
+            if u.get("username") == identity:
+                user = u
+                break
+    if not user:
+        raise ValueError("Usuario no encontrado (local).")
+    if not check_password_hash(user["password_hash"], password):
+        raise ValueError("Contraseña incorrecta (local).")
+    return user
+
+def ensure_user_doc(uid: str, data: dict):
+    if USE_FIRESTORE and db and uid:
+        db.collection("usuarios").document(uid).set(data, merge=True)
+
+def get_user_doc(uid: str) -> Optional[dict]:
+    if USE_FIRESTORE and db and uid:
+        doc = db.collection("usuarios").document(uid).get()
+        if doc.exists:
+            return doc.to_dict()
+    return None
+
+def parse_pyrebase_error(e: Exception) -> str:
+    s = str(e)
+    if "EMAIL_NOT_FOUND" in s:
+        return "No existe una cuenta con ese correo."
+    if "INVALID_PASSWORD" in s:
+        return "Contraseña incorrecta."
+    if "USER_DISABLED" in s:
+        return "La cuenta fue deshabilitada."
+    if "EMAIL_EXISTS" in s:
+        return "Ese correo ya está registrado."
+    if "TOO_MANY_ATTEMPTS_TRY_LATER" in s:
+        return "Demasiados intentos. Probá más tarde."
+    if "WEAK_PASSWORD" in s:
+        return "La contraseña es demasiado débil."
+    return "Error de autenticación."
+
+def calc_comision(precio: int) -> int:
+    precio = money(precio)
+    return max(0, precio - FIJO_EMPRESA)
+
+# --------------------
+# Helpers para creadores / mp token
+# --------------------
+def get_creator_doc_local(creator_id: str) -> dict:
+    creators = load_json(CREATORS_FILE)
+    return creators.get(creator_id) or {}
+
+def get_creator_mp_token(creator_id: str) -> Optional[str]:
+    try:
+        if USE_FIRESTORE and db:
+            doc = db.collection("creators").document(creator_id).get()
+            if doc.exists:
+                return (doc.to_dict() or {}).get("mp_access_token")
+        else:
+            c = get_creator_doc_local(creator_id)
+            return c.get("mp_access_token")
+    except Exception as e:
+        logger.warning("Error obteniendo mp token creator %s: %s", creator_id, e)
+    return None
+
+def save_tip_local(tip: dict):
+    tips = load_json(TIPS_FILE)
+    tips[str(uuid.uuid4())] = tip
+    save_json(TIPS_FILE, tips)
+
+def save_subscription_local(sub: dict):
+    subs = load_json(SUBSCRIPTIONS_FILE)
+    subs[str(uuid.uuid4())] = sub
+    save_json(SUBSCRIPTIONS_FILE, subs)
+
+def save_venta_local(venta: dict):
+    ventas = load_json(VENTAS_FILE)
+    ventas[str(uuid.uuid4())] = venta
+    save_json(VENTAS_FILE, ventas)
+
+# ────────────────────────────────────────────────────────────────────────
+# Decoradores y utilidades de sesión/rol
+# ────────────────────────────────────────────────────────────────────────
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if "user" not in session:
+            flash("Inicia sesión primero.", "warning")
+            return redirect(url_for("main.login"))
+        return f(*args, **kwargs)
+    return wrapper
+
+def require_role(role_expected: str):
+    def deco(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            role = session.get("role")
+            if role != role_expected:
+                return jsonify({"ok": False, "error": "Permisos insuficientes"}), 403
+            return f(*args, **kwargs)
+        return wrapper
+    return deco
+
+def route_for_role(role: str) -> str:
+    return url_for({
+        "buyer": "main.dashboard_buyer",
+        "creator": "main.dashboard_creator",
+        "promoter": "main.dashboard_promoter"
+    }.get(role, "main.dashboard_buyer"))
+
+def get_current_user() -> Optional[dict]:
+    if "user" not in session:
+        return None
+    return {
+        "uid": session.get("user"),
+        "email": session.get("email"),
+        "role": session.get("role"),
+        "full_name": session.get("full_name"),
+        "username": session.get("username"),
+        "is_admin": session.get("is_admin", False),
+    }
+
+@main.app_context_processor
+def inject_has_endpoint():
+    def has_endpoint(name: str) -> bool:
+        try:
+            url_for(name)
+            return True
+        except Exception:
+            return False
+    return dict(has_endpoint=has_endpoint)
+
+# ────────────────────────────────────────────────────────────────────────
+# Rutas base y auth
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/")
+def index():
+    return render_template("home/index.html", user=get_current_user())
+
+@main.route("/register", methods=["GET", "POST"])
+def register():
+    if "user" in session:
+        return redirect(route_for_role(session.get("role", "buyer")))
+
+    if request.method == "POST":
+        if request.form.get("website"):
+            flash("Error en formulario.", "danger")
+            return redirect(url_for("main.register"))
+
+        full_name = (request.form.get("full_name") or "").strip()
+        username  = (request.form.get("username")  or "").strip()
+        email     = normalize_email(request.form.get("email"))
+        password  = request.form.get("password") or ""
+        confirm   = request.form.get("confirm_password") or ""
+        role      = (request.form.get("role") or "buyer").strip()
+
+        if not full_name or not username or not email or not password:
+            flash("Completá todos los campos obligatorios.", "danger")
+            return redirect(url_for("main.register"))
+        if not EMAIL_REGEX.match(email):
+            flash("Correo inválido.", "danger")
+            return redirect(url_for("main.register"))
+        if not USERNAME_REGEX.match(username):
+            flash("Usuario inválido (3-20, letras, números, _ o .).", "danger")
+            return redirect(url_for("main.register"))
+        if password != confirm:
+            flash("Las contraseñas no coinciden.", "danger")
+            return redirect(url_for("main.register"))
+        if len(password) < 6:
+            flash("La contraseña debe tener al menos 6 caracteres.", "danger")
+            return redirect(url_for("main.register"))
+
+        if AUTH_AVAILABLE and firebase_auth:
+            try:
+                user = firebase_auth.create_user_with_email_and_password(email, password)
+                login_user = firebase_auth.sign_in_with_email_and_password(email, password)
+                try:
+                    firebase_auth.send_email_verification(login_user["idToken"])
+                except Exception as e_ver:
+                    logger.warning("No se pudo enviar verificación: %s", e_ver)
+
+                uid = user.get("localId") or user.get("uid") or str(uuid.uuid4())
+                ensure_user_doc(uid, {
+                    "full_name": full_name,
+                    "username": username,
+                    "email": email,
+                    "role": role,
+                    "is_admin": False,
+                    "verified": False,
+                    "provider": "password",
+                    "created_at": datetime.utcnow()
+                })
+                flash("✅ Registro exitoso. Revisá tu correo para verificar la cuenta.", "success")
+                return redirect(url_for("main.login"))
+            except Exception as e:
+                logger.warning("Firebase register error: %s", e)
+                flash(parse_pyrebase_error(e), "danger")
+
+        try:
+            create_local_user(email, password, username, full_name, role)
+            flash("Registro local exitoso. Ahora podés iniciar sesión.", "success")
+            return redirect(url_for("main.login"))
+        except Exception as e:
+            flash(str(e), "danger")
+
+    return render_template("auth/register.html")
+
+@main.route("/resend-verification", methods=["POST"])
+def resend_verification():
+    if not AUTH_AVAILABLE or not firebase_auth:
+        return jsonify({"ok": False, "msg": "Servicio no disponible"}), 503
+    email = normalize_email(request.form.get("email"))
+    if not email:
+        return jsonify({"ok": False, "msg": "Email requerido"}), 400
+    try:
+        password = request.form.get("password") or ""
+        user = firebase_auth.sign_in_with_email_and_password(email, password)
+        firebase_auth.send_email_verification(user["idToken"])
+        return jsonify({"ok": True})
+    except Exception as e:
+        logger.warning("Resend verification error: %s", e)
+        return jsonify({"ok": False, "msg": parse_pyrebase_error(e)}), 400
+
+@main.route("/login", methods=["GET", "POST"])
+def login():
+    if "user" in session:
+        return redirect(route_for_role(session.get("role", "buyer")))
+
+    if request.method == "POST":
+        identity = (request.form.get("email") or "").strip()
+        password = request.form.get("password") or ""
+        remember = request.form.get("remember") == "on"
+
+        email: Optional[str] = None
+        if EMAIL_REGEX.match(identity):
+            email = normalize_email(identity)
+        else:
+            if USE_FIRESTORE and db:
+                try:
+                    q = db.collection("usuarios").where("username", "==", identity).limit(1).get()
+                    for docu in q:
+                        email = normalize_email(docu.to_dict().get("email"))
+                        break
+                except Exception as e:
+                    logger.warning("Buscar por username en Firestore: %s", e)
+            if not email:
+                local = load_users()
+                for e_mail, u in local.items():
+                    if u.get("username") == identity:
+                        email = normalize_email(e_mail)
+                        break
+
+        if not email:
+            flash("Usuario o correo no encontrado.", "danger")
+            return redirect(url_for("main.login"))
+
+        if AUTH_AVAILABLE and firebase_auth:
+            try:
+                user = firebase_auth.sign_in_with_email_and_password(email, password)
+                info = firebase_auth.get_account_info(user["idToken"])
+                fb_user = info["users"][0]
+                uid = fb_user.get("localId") or fb_user.get("uid") or str(uuid.uuid4())
+                email_verified = fb_user.get("emailVerified", False)
+
+                if not email_verified:
+                    flash("Debés verificar tu correo antes de ingresar.", "warning")
+                    return redirect(url_for("main.login"))
+
+                ensure_user_doc(uid, {"verified": True})
+
+                role = "buyer"
+                full_name = ""
+                username = email.split("@")[0]
+                if USE_FIRESTORE and db:
+                    profile = get_user_doc(uid)
+                    if profile:
+                        role = profile.get("role", role)
+                        full_name = profile.get("full_name", full_name)
+                        username = profile.get("username", username)
+
+                session["user"] = uid
+                session["email"] = email
+                session["role"] = role
+                session["full_name"] = full_name
+                session["username"] = username
+                session["is_admin"] = False
+
+                session.permanent = remember
+                if remember:
+                    current_app.permanent_session_lifetime = timedelta(days=30)
+
+                flash("Bienvenido/a.", "success")
+                return redirect(route_for_role(role))
+            except Exception as e:
+                logger.warning("Firebase login error: %s", e)
+                flash(parse_pyrebase_error(e), "danger")
+
+        try:
+            u = authenticate_local_user(email or identity, password)
+            session["user"] = u["localId"]
+            session["email"] = u["email"]
+            session["role"] = u["role"]
+            session["full_name"] = u.get("full_name", "")
+            session["username"] = u.get("username", "")
+            session["is_admin"] = u.get("is_admin", False)
+
+            session.permanent = remember
+            if remember:
+                current_app.permanent_session_lifetime = timedelta(days=30)
+
+            flash("Bienvenido/a (modo local).", "success")
+            return redirect(route_for_role(session["role"]))
+        except Exception as e:
+            logger.info("Local login error: %s", e)
+            flash("Credenciales incorrectas.", "danger")
+
+    return render_template("auth/login.html")
+
+@main.route("/logout")
+def logout():
+    session.clear()
+    flash("Has cerrado sesión.", "success")
+    return redirect(url_for("main.login"))
+
+@main.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = normalize_email(request.form.get("email"))
+        if not email or not EMAIL_REGEX.match(email):
+            flash("Ingresá un correo válido.", "danger")
+            return redirect(url_for("main.forgot_password"))
+
+        if AUTH_AVAILABLE and firebase_auth:
+            try:
+                firebase_auth.send_password_reset_email(email)
+                flash("📩 Te enviamos un enlace para restablecer tu contraseña.", "success")
+                return redirect(url_for("main.login"))
+            except Exception as e:
+                logger.warning("Reset password Firebase: %s", e)
+                flash(parse_pyrebase_error(e), "danger")
+                return redirect(url_for("main.forgot_password"))
+
+        flash("La recuperación requiere el servicio remoto habilitado.", "warning")
+        return redirect(url_for("main.forgot_password"))
+
+    return render_template("auth/forgot_password.html")
+
+@main.route("/login/google", methods=["POST"])
+def login_google():
+    data = request.get_json(silent=True) or {}
+    id_token = data.get("idToken")
+
+    if not id_token:
+        return jsonify({"ok": False, "error": "Falta idToken"}), 400
+    if not FIREBASE_ADMIN_AVAILABLE or not firebase_admin_auth:
+        return jsonify({"ok": False, "error": "Verificación de token no disponible"}), 503
+
+    try:
+        decoded = firebase_admin_auth.verify_id_token(id_token)
+        uid = decoded.get("uid")
+        email = normalize_email(decoded.get("email"))
+        email_verified = decoded.get("email_verified", False)
+        name = decoded.get("name", "")
+        username = (email.split("@")[0] if email else f"user-{uid[:6]}")
+
+        if not email_verified:
+            return jsonify({"ok": False, "error": "Correo no verificado"}), 401
+
+        role = "buyer"
+        if USE_FIRESTORE and db and uid:
+            doc = db.collection("usuarios").document(uid).get()
+            if doc.exists:
+                role = doc.to_dict().get("role", role)
+                ensure_user_doc(uid, {"verified": True, "provider": "google"})
+            else:
+                ensure_user_doc(uid, {
+                    "email": email,
+                    "full_name": name,
+                    "username": username,
+                    "role": role,
+                    "is_admin": False,
+                    "verified": True,
+                    "provider": "google",
+                    "created_at": datetime.utcnow()
+                })
+
+        session["user"] = uid
+        session["email"] = email
+        session["full_name"] = name
+        session["username"] = username
+        session["role"] = role
+        session["is_admin"] = False
+
+        return redirect(route_for_role(role))
+    except Exception as e:
+        logger.warning("Google login token verify error: %s", e)
+        return jsonify({"ok": False, "error": "Token inválido o expirado"}), 401
+
+# ────────────────────────────────────────────────────────────────────────
+# Dashboards por rol
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/dashboard")
+@login_required
+def dashboard():
+    return redirect(route_for_role(session.get("role", "buyer")))
+
+@main.route("/dashboard/buyer")
+@login_required
+def dashboard_buyer():
+    return render_template("users/user_panel.html", user=get_current_user())
+
+@main.route("/dashboard/creator")
+@login_required
+def dashboard_creator():
+    return render_template("creators/creator_panel.html", user=get_current_user())
+
+@main.route("/dashboard/promoter")
+@login_required
+def dashboard_promoter():
+    return render_template("users/promotor.html", user=get_current_user())
+
+# ────────────────────────────────────────────────────────────────────────
+# CREATOR: Ruta perfil público
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/creator/<username>")
+def creator_profile(username):
+    # Renderiza la plantilla; el JS cliente cargará datos desde Firestore
+    return render_template("creators/profile.html", creator_username=username, user=get_current_user())
+
+# ────────────────────────────────────────────────────────────────────────
+# API: crear preferencia MP usando la cuenta del CREADOR (suscripción)
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/api/creator/subscribe", methods=["POST"])
+@login_required
+def api_creator_subscribe():
+    """
+    Crea preferencia de Mercado Pago con el access token del creator.
+    Body JSON: { creatorId: "<id>", price: <int> }
+    Devuelve init_point para redirigir al checkout.
+    """
+    data = request.get_json(silent=True) or {}
+    creator_id = data.get("creatorId") or ""
+    price = money(data.get("price") or 0)
+    if not creator_id or price <= 0:
+        return jsonify({"ok": False, "error": "creatorId y price requeridos"}), 400
+
+    mp_token = get_creator_mp_token(creator_id)
+    if not mp_token:
+        return jsonify({"ok": False, "error": "El creador no tiene Mercado Pago configurado"}), 400
+
+    try:
+        from mercadopago import SDK as MPSDK
+        sdk_for_creator = MPSDK(mp_token)
+        preference_data = {
+            "items": [{
+                "title": f"Suscripción a {creator_id}",
+                "quantity": 1,
+                "unit_price": price,
+                "currency_id": "UYU"
+            }],
+            "external_reference": json.dumps({
+                "type": "subscription",
+                "creatorId": creator_id,
+                "userId": session.get("user")
+            }),
+            "back_urls": {
+                "success": url_for("main.creator_profile", username=creator_id, _external=True),
+                "failure": url_for("main.creator_profile", username=creator_id, _external=True),
+                "pending": url_for("main.creator_profile", username=creator_id, _external=True)
+            },
+            "auto_return": "approved",
+            "notification_url": url_for("main.webhook_mp", _external=True)
+        }
+        pref = sdk_for_creator.preference().create(preference_data)
+        pref_res = pref.get("response", {}) or {}
+        pref_id = pref_res.get("id")
+
+        venta_doc = {
+            "type": "subscription",
+            "creatorId": creator_id,
+            "userId": session.get("user"),
+            "precioVenta": price,
+            "estadoPago": "pendiente",
+            "mp_preference_id": pref_id,
+            "mp_payment_id": None,
+            "mp_status": "pending",
+            "fecha": now_utc().isoformat()
+        }
+        if USE_FIRESTORE and db:
+            db.collection("ventas").add({**venta_doc, "created_at": now_utc()})
+        else:
+            save_venta_local(venta_doc)
+
+        return jsonify({"ok": True, "preference": pref_res, "init_point": pref_res.get("init_point")})
+    except Exception as e:
+        logger.exception("Error creando preferencia creator MP: %s", e)
+        return jsonify({"ok": False, "error": "no se pudo crear preferencia"}), 500
+
+# ────────────────────────────────────────────────────────────────────────
+# API: crear preferencia MP para propina (tip) usando cuenta del creator
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/api/creator/tip", methods=["POST"])
+@login_required
+def api_creator_tip():
+    """
+    Crea preferencia MP para propina a creator.
+    Body JSON: { creatorId, amount, message }
+    """
+    data = request.get_json(silent=True) or {}
+    creator_id = data.get("creatorId") or ""
+    amount = money(data.get("amount") or 0)
+    message = data.get("message") or ""
+    if not creator_id or amount <= 0:
+        return jsonify({"ok": False, "error": "creatorId y amount requeridos"}), 400
+
+    mp_token = get_creator_mp_token(creator_id)
+    if not mp_token:
+        return jsonify({"ok": False, "error": "El creador no tiene Mercado Pago configurado"}), 400
+
+    try:
+        from mercadopago import SDK as MPSDK
+        sdk_for_creator = MPSDK(mp_token)
+        preference_data = {
+            "items": [{
+                "title": f"Propina a {creator_id}",
+                "quantity": 1,
+                "unit_price": amount,
+                "currency_id": "UYU"
+            }],
+            "external_reference": json.dumps({
+                "type": "tip",
+                "creatorId": creator_id,
+                "fromUser": session.get("user"),
+                "message": message
+            }),
+            "back_urls": {
+                "success": url_for("main.creator_profile", username=creator_id, _external=True),
+                "failure": url_for("main.creator_profile", username=creator_id, _external=True),
+                "pending": url_for("main.creator_profile", username=creator_id, _external=True)
+            },
+            "auto_return": "approved",
+            "notification_url": url_for("main.webhook_mp", _external=True)
+        }
+        pref = sdk_for_creator.preference().create(preference_data)
+        pref_res = pref.get("response", {}) or {}
+        pref_id = pref_res.get("id")
+
+        tip_doc = {
+            "fromUser": session.get("user"),
+            "toCreator": creator_id,
+            "amount": amount,
+            "message": message,
+            "status": "pending",
+            "mp_preference_id": pref_id,
+            "mp_payment_id": None,
+            "mp_status": "pending",
+            "fecha": now_utc().isoformat()
+        }
+        if USE_FIRESTORE and db:
+            db.collection("tips").add({**tip_doc, "created_at": now_utc()})
+        else:
+            save_tip_local(tip_doc)
+
+        return jsonify({"ok": True, "preference": pref_res, "init_point": pref_res.get("init_point")})
+    except Exception as e:
+        logger.exception("Error creando preferencia tip MP: %s", e)
+        return jsonify({"ok": False, "error": "no se pudo crear preferencia de propina"}), 500
+
+# ────────────────────────────────────────────────────────────────────────
+# API Promotor
+# ────────────────────────────────────────────────────────────────────────
+def _ensure_promoter_local(uid: str) -> dict:
+    promoters = load_json(PROMOTERS_FILE)
+    p = promoters.get(uid)
+    if not p:
+        p = {
+            "uid": uid,
+            "nombre": session.get("full_name", "") or session.get("username", "") or "Promotor",
+            "email": session.get("email", ""),
+            "whatsapp": "",
+            "fotoPerfil": "",
+            "bio": "",
+            "linkPerfil": "",
+            "linkInvitacion": "",
+            "precioSuscripcion": 950,
+            "comisionesAcumuladas": 0,
+            "totalVentas": 0,
+            "totalReferidos": 0,
+            "totalCreadores": 0,
+            "nivel": "Principiante",
+            "logros": [],
+            "progresoDesafio": 0,
+            "estado": "activo",
+            "fechaRegistro": now_utc().isoformat(),
+        }
+        promoters[uid] = p
+        save_json(PROMOTERS_FILE, promoters)
+    return p
+
+def _save_promoter_local(uid: str, data: dict):
+    promoters = load_json(PROMOTERS_FILE)
+    promoters[uid] = {**(promoters.get(uid, {})), **data}
+    save_json(PROMOTERS_FILE, promoters)
+
+def _get_creators_local() -> list:
+    data = load_json(CREATORS_FILE)
+    if isinstance(data, dict):
+        return [{"id": k, **v} for k, v in data.items()]
+    if isinstance(data, list):
+        return data
+    return []
+
+@main.route("/api/promoter/bootstrap")
+@login_required
+@require_role("promoter")
+def promoter_bootstrap():
+    uid = session["user"]
+    base_url = request.url_root.rstrip("/")
+    if USE_FIRESTORE and db:
+        ref = db.collection("promotores").document(uid)
+        snap = ref.get()
+        if not snap.exists:
+            ref.set({
+                "nombre": session.get("full_name") or session.get("username") or "Promotor",
+                "email": session.get("email", ""),
+                "whatsapp": "",
+                "fotoPerfil": "",
+                "bio": "",
+                "linkPerfil": f"{base_url}/p/{uid}",
+                "linkInvitacion": f"{base_url}/?ref={uid}",
+                "precioSuscripcion": 950,
+                "comisionesAcumuladas": 0,
+                "totalVentas": 0,
+                "totalReferidos": 0,
+                "totalCreadores": 0,
+                "nivel": "Principiante",
+                "logros": [],
+                "progresoDesafio": 0,
+                "estado": "activo",
+                "fechaRegistro": now_utc()
+            }, merge=True)
+            data = ref.get().to_dict()
+        else:
+            data = snap.to_dict()
+            data.setdefault("linkPerfil", f"{base_url}/p/{uid}")
+            data.setdefault("linkInvitacion", f"{base_url}/?ref={uid}")
+            ref.set({"linkPerfil": data["linkPerfil"], "linkInvitacion": data["linkInvitacion"]}, merge=True)
+    else:
+        data = _ensure_promoter_local(uid)
+        if not data.get("linkPerfil"):
+            data["linkPerfil"] = f"{base_url}/p/{uid}"
+        if not data.get("linkInvitacion"):
+            data["linkInvitacion"] = f"{base_url}/?ref={uid}"
+        _save_promoter_local(uid, data)
+
+    return jsonify({"ok": True, "promoter": data})
+
+@main.route("/api/promoter/price", methods=["GET", "POST"])
+@login_required
+@require_role("promoter")
+def promoter_price():
+    uid = session["user"]
+    if request.method == "GET":
+        if USE_FIRESTORE and db:
+            snap = db.collection("promotores").document(uid).get()
+            precio = (snap.to_dict() or {}).get("precioSuscripcion", 950) if snap.exists else 950
+        else:
+            precio = _ensure_promoter_local(uid).get("precioSuscripcion", 950)
+        return jsonify({"ok": True, "precio": int(precio), "minimo": FIJO_EMPRESA})
+
+    data = request.get_json(silent=True) or {}
+    precio = money(data.get("precio"))
+    if precio < FIJO_EMPRESA:
+        return jsonify({"ok": False, "error": f"El precio mínimo es {FIJO_EMPRESA}"}), 400
+
+    if USE_FIRESTORE and db:
+        db.collection("promotores").document(uid).set({"precioSuscripcion": precio}, merge=True)
+    else:
+        _save_promoter_local(uid, {"precioSuscripcion": precio})
+
+    return jsonify({"ok": True, "precio": precio, "comision_estimada": calc_comision(precio)})
+
+@main.route("/api/promoter/ref-link")
+@login_required
+@require_role("promoter")
+def promoter_ref_link():
+    uid = session["user"]
+    base_url = request.url_root.rstrip("/")
+    link = f"{base_url}/?ref={uid}"
+    if USE_FIRESTORE and db:
+        db.collection("promotores").document(uid).set({"linkInvitacion": link}, merge=True)
+    else:
+        _save_promoter_local(uid, {"linkInvitacion": link})
+    return jsonify({"ok": True, "ref": link})
+
+@main.route("/api/promoter/creators")
+@login_required
+@require_role("promoter")
+def promoter_creators():
+    creators = []
+    if USE_FIRESTORE and db:
+        for d in db.collection("creadores").stream():
+            c = d.to_dict()
+            c["id"] = d.id
+            creators.append(c)
+    else:
+        creators = _get_creators_local()
+    return jsonify({"ok": True, "creators": creators})
+
+@main.route("/api/promoter/overview")
+@login_required
+@require_role("promoter")
+def promoter_overview():
+    uid = session["user"]
+    metrics = {
+        "totalCreadores": 0,
+        "totalReferidos": 0,
+        "comisionesAcumuladas": 0,
+        "totalVentas": 0,
+        "ranking": None,
+        "nivel": "Principiante",
+        "logros": [],
+        "progresoDesafio": 0
+    }
+    ventas = []
+
+    if USE_FIRESTORE and db:
+        p = db.collection("promotores").document(uid).get()
+        if p.exists:
+            pd = p.to_dict()
+            for k in metrics:
+                metrics[k] = pd.get(k, metrics[k])
+        q = (db.collection("ventas")
+             .where("promotorId", "==", uid)
+             .order_by("fecha", direction=firestore.Query.DESCENDING)
+             .limit(10))
+        for docu in q.stream():
+            v = docu.to_dict()
+            v["id"] = docu.id
+            ventas.append(v)
+    else:
+        promoters = load_json(PROMOTERS_FILE)
+        pd = promoters.get(uid, {})
+        for k in metrics:
+            metrics[k] = pd.get(k, metrics[k])
+
+        all_ventas = load_json(VENTAS_FILE)
+        ventas = [{**v, "id": k} for k, v in all_ventas.items() if v.get("promotorId") == uid]
+        ventas.sort(key=lambda x: x.get("fecha", ""), reverse=True)
+        ventas = ventas[:10]
+
+    return jsonify({"ok": True, "metrics": metrics, "ventas": ventas})
+
+# ────────────────────────────────────────────────────────────────────────
+# CHECKOUT MERCADO PAGO para PROMOTORES
+# ────────────────────────────────────────────────────────────────────────
+@main.route("/checkout", methods=["POST"])
+@login_required
+@require_role("promoter")
+def checkout():
+    if not MP_AVAILABLE:
+        return jsonify({"ok": False, "error": "Mercado Pago no configurado"}), 503
+
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "Suscripción PlayTimeUY").strip()
+    quantity = safe_int(data.get("quantity") or 1, 1)
+    unit_price = money(data.get("unit_price"))
+    promotor_id = data.get("promotorId") or session["user"]
+    external_reference = data.get("external_reference") or promotor_id
+
+    if unit_price < FIJO_EMPRESA:
+        return jsonify({"ok": False, "error": f"El precio mínimo es {FIJO_EMPRESA}"}), 400
+
+    preference_data = {
+        "items": [{
+            "title": title,
+            "quantity": quantity,
+            "unit_price": unit_price,
+            "currency_id": "UYU"
+        }],
+        "payer": {},
+        "external_reference": external_reference,
+        "metadata": {
+            "promotorId": promotor_id,
+            "precio": unit_price
+        },
+        "back_urls": {
+            "success": url_for("main.dashboard_promoter", _external=True),
+            "failure": url_for("main.dashboard_promoter", _external=True),
+            "pending": url_for("main.dashboard_promoter", _external=True),
+        },
+        "auto_return": "approved",
+        "notification_url": url_for("main.webhook_mp", _external=True)  # POST desde MP
+    }
+
+    try:
+        pref = sdk.preference().create(preference_data)
+        pref_res = pref.get("response", {}) or {}
+        pref_id = pref_res.get("id")
+
+        venta_doc = {
+            "promotorId": promotor_id,
+            "precioVenta": unit_price,
+            "comisionPromotor": calc_comision(unit_price),
+            "estadoPago": "pendiente",
+            "mp_preference_id": pref_id,
+            "mp_payment_id": None,
+            "mp_status": "pending",
+            "fecha": now_utc().isoformat()
+        }
+
+        if USE_FIRESTORE and db:
+            db.collection("ventas").add({**venta_doc, "fecha": now_utc()})
+        else:
+            save_venta_local(venta_doc)
+
+        return jsonify({"ok": True, "preference": pref_res, "id": pref_id})
+    except Exception as e:
+        logger.exception("Error creando preferencia MP: %s", e)
+        return jsonify({"ok": False, "error": "No se pudo crear preferencia"}), 500
+
+# ────────────────────────────────────────────────────────────────────────
+# Helpers para actualizar ventas/suscripciones/tips - firestore y local
+# ────────────────────────────────────────────────────────────────────────
+def _acreditar_metricas_local(promotor_id: str, venta: dict, status: str):
+    if status != "approved":
+        return
+    promoters = load_json(PROMOTERS_FILE)
+    p = promoters.get(promotor_id, {})
+    p["comisionesAcumuladas"] = money(p.get("comisionesAcumuladas", 0)) + money(venta.get("comisionPromotor", 0))
+    p["totalVentas"] = money(p.get("totalVentas", 0)) + money(venta.get("precioVenta", 0))
+    promoters[promotor_id] = p
+    save_json(PROMOTERS_FILE, promoters)
+
+# ────────────────────────────────────────────────────────────────────────
+# Helpers Mercado Pago (global)
+# ────────────────────────────────────────────────────────────────────────
+def _safe_get_payment_global(payment_id: str) -> dict:
+    try:
+        if not MP_AVAILABLE:
+            return {}
+        res = sdk.payment().get(payment_id)
+        return res.get("response", {}) or {}
+    except Exception as e:
+        logger.exception("Error consultando payment global %s: %s", payment_id, e)
+        return {}
+
+def _safe_get_merchant_order_global(mo_id: str) -> dict:
+    try:
+        if not MP_AVAILABLE:
+            return {}
+        res = sdk.merchant_order().get(mo_id)
+        return res.get("response", {}) or {}
+    except Exception as e:
+        logger.exception("Error consultando merchant_order global %s: %s", mo_id, e)
+        return {}
+
+# ────────────────────────────────────────────────────────────────────────
+# Webhook MP - suscripciones y tips (creators) + ventas promotores
+# ────────────────────────────────────────────────────────────────────────
+def is_webhook_replayed(event_id: str) -> bool:
+    if not event_id:
+        return False
+    if USE_FIRESTORE and db:
+        key = f"mp:{event_id}"
+        doc = db.collection("webhook_events").document(key).get()
+        return doc.exists
+    else:
+        logd = load_json(WEBHOOK_LOG_FILE)
+        return key_in_dict(logd, event_id)
+
+def mark_webhook_processed(event_id: str):
+    if not event_id:
+        return
+    if USE_FIRESTORE and db:
+        key = f"mp:{event_id}"
+        db.collection("webhook_events").document(key).set({
+            "processed_at": now_utc(),
+            "source": "mp"
+        })
+    else:
+        logd = load_json(WEBHOOK_LOG_FILE)
+        logd[event_id] = {"processed_at": now_utc().isoformat(), "source": "mp"}
+        save_json(WEBHOOK_LOG_FILE, logd)
+
+@main.route("/webhooks/mp", methods=["POST"])
+def webhook_mp():
+    """
+    Webhook de Mercado Pago:
+    - Soporta preferencias creadas por la plataforma o por creadores (external_reference con JSON)
+    - Actualiza ventas, suscripciones y tips según external_reference o metadata
+    - Idempotente (usa mark_webhook_processed)
+    """
+    # Verificación HMAC opcional
+    try:
+        raw = request.get_data() or b""
+        if WEBHOOK_SHARED_SECRET:
+            provided = request.headers.get("X-Signature-Hmac", "")
+            expected = sign_payload(WEBHOOK_SHARED_SECRET, raw)
+            if not provided or not hmac.compare_digest(provided, expected):
+                logger.warning("Firma HMAC inválida en webhook.")
+                return jsonify({"ok": False, "error": "invalid signature"}), 401
+    except Exception as e:
+        logger.exception("Error validando firma HMAC: %s", e)
+        return jsonify({"ok": False, "error": "signature check failed"}), 400
+
+    # Parseo del payload
+    payload = request.get_json(silent=True) or {}
+    topic = (payload.get("type") or payload.get("topic") or "").lower()
+    data_id = payload.get("data", {}).get("id") or payload.get("id") or ""
+    event_id = request.headers.get("X-Request-Id") or f"{topic}:{data_id}"
+
+    if is_webhook_replayed(event_id):
+        logger.info("Webhook ya procesado: %s", event_id)
+        return jsonify({"ok": True, "idempotent": True})
+
+    logger.info("[MP Webhook] topic=%s id=%s payload=%s", topic, data_id, payload)
+
+    preference_id: Optional[str] = None
+    payment_id: Optional[str] = None
+    status: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    ref_obj: Optional[dict] = None
+
+    try:
+        # 1) Si es evento de payment, obtener payment y merchant_order
+        if topic == "payment" and data_id:
+            payment_id = str(data_id)
+            pay = _safe_get_payment_global(payment_id)
+            status = (pay.get("status") or "").lower()
+
+            # fecha de aprobación
+            approved_at = parse_iso_datetime(pay.get("date_approved"))
+
+            # merchant order desde payment
+            mo_id = None
+            if isinstance(pay.get("order"), dict):
+                mo_id = pay["order"].get("id")
+            if mo_id:
+                mo = _safe_get_merchant_order_global(str(mo_id))
+                preference_id = mo.get("preference_id") or (mo.get("preference") or {}).get("id")
+                external_reference_raw = mo.get("external_reference") or (mo.get("preference") or {}).get("external_reference")
+                if external_reference_raw:
+                    try:
+                        ref_obj = json.loads(external_reference_raw)
+                    except Exception:
+                        ref_obj = {"raw": external_reference_raw}
+            # a veces el payment trae metadata con external_reference
+            if not ref_obj:
+                md = pay.get("metadata") or {}
+                ext = md.get("external_reference") or md.get("externalReference") or md.get("external-reference")
+                if ext:
+                    try:
+                        ref_obj = json.loads(ext)
+                    except Exception:
+                        ref_obj = {"raw": ext}
+
+        # 2) Si es evento de merchant_order, obtener preference, pagos y external_reference
+        elif topic in ("merchant_order", "merchant_orders") and data_id:
+            mo = _safe_get_merchant_order_global(str(data_id))
+            preference_id = mo.get("preference_id")
+            paid_amount = money(mo.get("paid_amount", 0))
+            order_status = (mo.get("order_status") or "").lower()
+            status = "approved" if (order_status == "paid" or paid_amount > 0) else "pending"
+
+            payments = mo.get("payments") or []
+            for p in payments:
+                if (p.get("status") or "").lower() == "approved":
+                    payment_id = str(p.get("id"))
+                    approved_at = parse_iso_datetime(p.get("date_approved"))
+                    break
+
+            external_reference_raw = mo.get("external_reference") or (mo.get("preference") or {}).get("external_reference")
+            if external_reference_raw:
+                try:
+                    ref_obj = json.loads(external_reference_raw)
+                except Exception:
+                    ref_obj = {"raw": external_reference_raw}
+        else:
+            # Evento no soportado
+            mark_webhook_processed(event_id)
+            return jsonify({"ok": True, "skipped": "unsupported_topic"})
+
+        # Si no se pudo llegar a un preference_id, no podemos conciliar
+        if not preference_id:
+            mark_webhook_processed(event_id)
+            return jsonify({"ok": True, "skipped": "no_preference"})
+
+        # ── Actualización en Firestore o local
+        storage_type = "firestore" if (USE_FIRESTORE and db) else "local"
+        result = {"storage": storage_type, "preference_id": preference_id, "status": status, "payment_id": payment_id}
+
+        if USE_FIRESTORE and db:
+            # Ventas: localizar por mp_preference_id y actualizar
+            venta_ref = None
+            venta_data = None
+            q = db.collection("ventas").where("mp_preference_id", "==", preference_id).limit(1).get()
+            for d in q:
+                venta_ref = d.reference
+                venta_data = d.to_dict()
+                break
+
+            if venta_ref and venta_data:
+                prev_estado = (venta_data.get("estadoPago") or "").lower()
+                new_estado = choose_estado_from_status(status)
+                updates = {
+                    "mp_payment_id": payment_id,
+                    "mp_status": status,
+                    "estadoPago": new_estado,
+                    "updated_at": now_utc()
+                }
+                if approved_at:
+                    updates["fechaAprobacion"] = approved_at
+                venta_ref.set(updates, merge=True)
+                venta_data.update(updates)
+
+                # Acreditaciones para promotor si pasó a approved
+                if status == "approved" and prev_estado != "aprobado":
+                    promotor_id = venta_data.get("promotorId")
+                    if promotor_id:
+                        db.collection("promotores").document(promotor_id).set({
+                            "comisionesAcumuladas": firestore.Increment(money(venta_data.get("comisionPromotor", 0))),
+                            "totalVentas": firestore.Increment(money(venta_data.get("precioVenta", 0))),
+                            "updated_at": now_utc()
+                        }, merge=True)
+
+            # External reference de creators (subscription / tip)
+            if isinstance(ref_obj, dict):
+                ref_type = ref_obj.get("type")
+                if ref_type == "subscription" and status == "approved":
+                    creatorId = ref_obj.get("creatorId")
+                    userId = ref_obj.get("userId")
+                    # Idempotencia: buscar por (creatorId,userId,mp_preference_id)
+                    existing = db.collection("subscriptions") \
+                                 .where("creatorId", "==", creatorId) \
+                                 .where("userId", "==", userId) \
+                                 .where("mp_preference_id", "==", preference_id) \
+                                 .limit(1).get()
+                    if not list(existing):
+                        start = now_utc()
+                        end = start + timedelta(days=30)
+                        db.collection("subscriptions").add({
+                            "creatorId": creatorId,
+                            "userId": userId,
+                            "startDate": start,
+                            "endDate": end,
+                            "active": True,
+                            "price": venta_data.get("precioVenta") if venta_data else None,
+                            "mp_preference_id": preference_id,
+                            "created_at": now_utc()
+                        })
+
+                elif ref_type == "tip":
+                    creatorId = ref_obj.get("creatorId")
+                    fromUser = ref_obj.get("fromUser")
+                    msg = ref_obj.get("message")
+
+                    qtip = db.collection("tips").where("mp_preference_id", "==", preference_id).limit(1).get()
+                    if list(qtip):
+                        # actualizar existente
+                        for t in qtip:
+                            t.reference.set({
+                                "mp_payment_id": payment_id,
+                                "mp_status": status,
+                                "status": choose_estado_from_status(status),
+                                "updated_at": now_utc()
+                            }, merge=True)
+                    else:
+                        if status == "approved":
+                            db.collection("tips").add({
+                                "fromUser": fromUser,
+                                "toCreator": creatorId,
+                                "amount": venta_data.get("precioVenta") if venta_data else None,
+                                "message": msg,
+                                "status": "aprobado",
+                                "mp_preference_id": preference_id,
+                                "mp_payment_id": payment_id,
+                                "created_at": now_utc()
+                            })
+
+        else:
+            # Local JSON
+            ventas = load_json(VENTAS_FILE)
+            updated_id = None
+            for vid, v in ventas.items():
+                if v.get("mp_preference_id") == preference_id:
+                    prev_estado = (v.get("estadoPago") or "").lower()
+                    v["estadoPago"] = choose_estado_from_status(status)
+                    v["mp_payment_id"] = payment_id
+                    v["mp_status"] = status
+                    if approved_at:
+                        v["fechaAprobacion"] = approved_at.isoformat()
+                    ventas[vid] = v
+                    updated_id = vid
+                    break
+
+            if updated_id:
+                save_json(VENTAS_FILE, ventas)
+                venta = ventas[updated_id]
+                if status == "approved":
+                    promotor_id = venta.get("promotorId")
+                    if promotor_id:
+                        _acreditar_metricas_local(promotor_id, venta, status)
+
+            # Manejo local para subscriptions / tips
+            if isinstance(ref_obj, dict):
+                ref_type = ref_obj.get("type")
+                if ref_type == "subscription" and status == "approved":
+                    creatorId = ref_obj.get("creatorId")
+                    userId = ref_obj.get("userId")
+
+                    subs = load_json(SUBSCRIPTIONS_FILE)
+                    exists = False
+                    for _, s in subs.items():
+                        if s.get("creatorId") == creatorId and s.get("userId") == userId and s.get("mp_preference_id") == preference_id:
+                            exists = True
+                            break
+                    if not exists:
+                        start = now_utc().isoformat()
+                        end = (now_utc() + timedelta(days=30)).isoformat()
+                        save_subscription_local({
+                            "creatorId": creatorId,
+                            "userId": userId,
+                            "startDate": start,
+                            "endDate": end,
+                            "active": True,
+                            "mp_preference_id": preference_id,
+                            "created_at": start
+                        })
+
+                elif ref_type == "tip":
+                    creatorId = ref_obj.get("creatorId")
+                    fromUser = ref_obj.get("fromUser")
+                    msg = ref_obj.get("message")
+                    # Si está aprobado, registramos tip; si no, lo dejamos en pendiente
+                    tip_status = choose_estado_from_status(status)
+                    save_tip_local({
+                        "fromUser": fromUser,
+                        "toCreator": creatorId,
+                        "amount": None,
+                        "message": msg,
+                        "status": tip_status,
+                        "mp_preference_id": preference_id,
+                        "mp_payment_id": payment_id,
+                        "created_at": now_utc().isoformat()
+                    })
+
+        mark_webhook_processed(event_id)
+        return jsonify({"ok": True, "result": result})
+
+    except Exception as e:
+        logger.exception("Webhook error: %s", e)
+        return jsonify({"ok": False, "error": "webhook processing error"}), 500
+
+# ────────────────────────────────────────────────────────────────────────
+# Errores
+# ────────────────────────────────────────────────────────────────────────
+@main.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
+
+@main.errorhandler(500)
+def server_error(e):
+    logger.exception("Error 500: %s", e)
+    return render_template("500.html"), 500 teniendo en cuenta esto y que la carpeta de content_upload esta en C:\PlayTimeUY\app\templates\creators  {% extends 'base.html' %} {% block title %}Subir Contenido{% endblock %} {% block content %} <h2>Subir nuevo contenido</h2> <form method="POST" enctype="multipart/form-data"> <input type="file" name="archivo"><br> <textarea name="descripcion" placeholder="Descripción"></textarea><br> <button type="submit">Subir</button> </form> {% endblock %} creame un codigo completo moderno y funcionando sin errore para que pueda hacer lo mismo que en fansly sin problemas   

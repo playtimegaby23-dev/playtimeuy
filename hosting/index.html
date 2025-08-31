@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>PlayTimeUY - Demo Pago</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+<body>
+  <h1>Demo de pago</h1>
+  <div>
+    <label>Precio final (>= 750): </label>
+    <input id="precio" type="number" value="950" min="750" />
+    <button id="pagar">Pagar</button>
+  </div>
+  <div id="checkout-container" style="margin-top:20px;"></div>
+
+  <script type="module">
+    import { auth } from "./firebase-config.js"; // tu archivo existente
+
+    const API = "https://playtimeuy.cloudfunctions.net/api"; // reemplazar si tu proyecto es otro
+    const PRECIO_BASE = 750;
+
+    document.getElementById("pagar").addEventListener("click", async () => {
+      const precioFinal = Number(document.getElementById("precio").value);
+      if (precioFinal < PRECIO_BASE) return alert(`El precio debe ser >= ${PRECIO_BASE}`);
+
+      const body = {
+        precioFinal,
+        promotorId: "PROMOTOR_DEMO_123",       // acá ponés el ID real del promotor logueado
+        compradorUid: auth.currentUser?.uid || null
+        // Si fuera un creador en vez de promotor: enviás { creadorId: "CREADOR_XYZ" }
+      };
+
+      const r = await fetch(`${API}/mp/create-preference`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await r.json();
+      if (!data.ok) return alert("Error creando preferencia: " + data.error);
+
+      const mp = new window.MercadoPago(data.publicKey, { locale: "es-UY" });
+      mp.checkout({
+        preference: { id: data.preferenceId },
+        render: { container: "#checkout-container", label: "Pagar con Mercado Pago" }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{# profile_modals.html - modales: tip, bundles, mensaje #}
+
+<dialog id="tipModal" class="backdrop:bg-black/40 rounded-2xl w-11/12 max-w-md p-0">
+  <form method="dialog" class="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden">
+    <div class="p-4 border-b dark:border-white/10 flex items-center justify-between">
+      <h3 class="font-semibold">Dar propina</h3>
+      <button class="px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">✕</button>
+    </div>
+    <div class="p-4 space-y-3">
+      <label class="text-sm">Monto (UYU)</label>
+      <input id="tipAmount" type="number" min="20" step="10" class="w-full rounded-xl border px-3 py-2" value="50">
+      <label class="text-sm">Mensaje (opcional)</label>
+      <textarea id="tipMessage" rows="3" class="w-full rounded-xl border px-3 py-2"></textarea>
+      <p class="text-xs text-gray-500">Las propinas son procesadas con la cuenta del creador.</p>
+    </div>
+    <div class="p-4 flex justify-end gap-2 border-t dark:border-white/10">
+      <button value="cancel" class="px-4 py-2 rounded-xl border">Cancelar</button>
+      <button id="tipConfirm" type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white font-semibold">Enviar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="bundlesModal" class="backdrop:bg-black/40 rounded-2xl w-11/12 max-w-lg p-0">
+  <form method="dialog" class="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden">
+    <div class="p-4 border-b dark:border-white/10 flex items-center justify-between">
+      <h3 class="font-semibold">Bundles de suscripción</h3>
+      <button class="px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">✕</button>
+    </div>
+    <div id="bundlesBody" class="p-4 grid gap-3"></div>
+    <div class="p-4 flex justify-end gap-2 border-t dark:border-white/10">
+      <button value="default" class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/10">Cerrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="messageModal" class="backdrop:bg-black/40 rounded-2xl w-11/12 max-w-lg p-0">
+  <form method="dialog" class="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden">
+    <div class="p-4 border-b dark:border-white/10 flex items-center justify-between">
+      <h3 class="font-semibold">Enviar mensaje</h3>
+      <button class="px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">✕</button>
+    </div>
+    <div class="p-4 space-y-3">
+      <textarea id="dmText" rows="4" class="w-full rounded-xl border px-3 py-2" placeholder="Escribí algo..."></textarea>
+      <p class="text-xs text-gray-500">Los mensajes pueden requerir suscripción o propina según la configuración del creador.</p>
+    </div>
+    <div class="p-4 flex justify-end gap-2 border-t dark:border-white/10">
+      <button value="cancel" class="px-4 py-2 rounded-xl border">Cancelar</button>
+      <button id="dmSendBtn" type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white font-semibold">Enviar</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module">
+  import { db } from "/static/js/firebase-config.js";
+  import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const CURRENT_USER_ID = "{{ session.get('user','') }}";
+
+  // Tip flow -> crea intent para backend de MP del creator
+  document.getElementById('tipConfirm')?.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    const amount = Number(document.getElementById('tipAmount').value || 0);
+    const message = document.getElementById('tipMessage').value || '';
+    if (!CURRENT_USER_ID) { alert('Iniciá sesión para dar propina.'); return; }
+    if (!amount || amount < 20) { alert('Monto mínimo 20 UYU.'); return; }
+
+    // 1) Registramos un intent en Firestore (o lo podés llamar directo al backend para crear preferencia MP)
+    await addDoc(collection(db,'tip_intents'), {
+      fromUser: CURRENT_USER_ID,
+      toCreator: window.__creatorId || null,
+      amount,
+      message,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+
+    document.getElementById('tipModal').close();
+    // 2) luego el frontend puede llamar al endpoint que crea la preferencia MP del creator (/api/creator/tip)
+    // Ejemplo:
+    try {
+      const r = await fetch('/api/creator/tip', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ creatorId: window.__creatorId, amount, message })
+      });
+      const js = await r.json();
+      if (js.ok && js.init_point) window.location.href = js.init_point;
+      else alert(js.error || 'Propina registrada. Redirigir a pago no disponible.');
+    } catch (err) {
+      console.error(err);
+      alert('Error iniciando propina.');
+    }
+  });
+
+  // DM flow -> mensaje simple en Firestore (podés extender con pagos)
+  document.getElementById('dmSendBtn')?.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    const text = document.getElementById('dmText').value.trim();
+    if (!CURRENT_USER_ID) { alert('Iniciá sesión para chatear.'); return; }
+    if (!text) return;
+    await addDoc(collection(db,'messages'), {
+      chatId: `${CURRENT_USER_ID}-${window.__creatorId||'unknown'}`,
+      from: CURRENT_USER_ID,
+      to: window.__creatorId || null,
+      text,
+      createdAt: serverTimestamp(),
+      kind: 'text',
+      delivered: false
+    });
+    document.getElementById('messageModal').close();
+    alert('Mensaje enviado ✔');
+  });
+
+  // Bundles content placeholder (se puede cargar dinámicamente)
+  (async ()=>{
+    const body = document.getElementById('bundlesBody');
+    body.innerHTML = '';
+    const bundles = [
+      {label:'3 meses -20%', price: 'UYU 2.280', months:3},
+      {label:'6 meses -35%', price: 'UYU 3.900', months:6},
+    ];
+    bundles.forEach(b=>{
+      const el = document.createElement('div');
+      el.className = 'rounded-xl border p-3 flex items-center justify-between';
+      el.innerHTML = `<div><p class="font-medium">${b.label}</p><p class="text-sm text-gray-500">${b.price}</p></div><button class="px-3 py-2 rounded-xl bg-pink-600 text-white">Elegir</button>`;
+      body.appendChild(el);
+    });
+  })();
+</script>

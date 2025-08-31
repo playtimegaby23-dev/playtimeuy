@@ -1,0 +1,104 @@
+{# profile_settings.html - Panel para que el creador edite su perfil #}
+{% extends "base.html" %}
+{% block title %}Configurar perfil{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 md:px-6 py-8">
+  <h2 class="text-2xl font-bold">Configuración del perfil</h2>
+  <p class="text-gray-600 mb-6">Actualizá tu portada, avatar, bio, precio y cuenta Mercado Pago (opcional).</p>
+
+  <form id="profileForm" class="space-y-6 bg-white/70 dark:bg-white/5 rounded-2xl p-6 border dark:border-white/10">
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm">Nombre para mostrar</label>
+        <input id="displayNameInput" class="w-full mt-1 rounded-xl border px-3 py-2" placeholder="Sofi 🔥">
+      </div>
+      <div>
+        <label class="text-sm">Username</label>
+        <input id="usernameInput" class="w-full mt-1 rounded-xl border px-3 py-2" placeholder="sofi_hot" disabled>
+      </div>
+    </div>
+
+    <div>
+      <label class="text-sm">Bio</label>
+      <textarea id="bioInput" rows="4" class="w-full mt-1 rounded-xl border px-3 py-2"></textarea>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div>
+        <label class="text-sm">Precio mensual (UYU)</label>
+        <input id="priceInput" type="number" min="0" class="w-full mt-1 rounded-xl border px-3 py-2" placeholder="950">
+      </div>
+      <div>
+        <label class="text-sm">Portada (URL o subir)</label>
+        <input id="coverInput" class="w-full mt-1 rounded-xl border px-3 py-2" placeholder="https://...">
+      </div>
+      <div>
+        <label class="text-sm">Avatar (URL o subir)</label>
+        <input id="avatarInput" class="w-full mt-1 rounded-xl border px-3 py-2" placeholder="https://...">
+      </div>
+    </div>
+
+    <div>
+      <label class="text-sm">Links sociales (JSON)</label>
+      <input id="socialInput" class="w-full mt-1 rounded-xl border px-3 py-2" placeholder='{"instagram":"https://..."}'>
+    </div>
+
+    <div>
+      <label class="text-sm">Cuenta Mercado Pago del creador (ACCESS_TOKEN)</label>
+      <input id="mpTokenInput" class="w-full mt-1 rounded-xl border px-3 py-2" placeholder="opcionalesi querés cobrar con tu MP">
+      <p class="text-xs text-gray-500 mt-1">Si querés que los pagos vayan a tu cuenta, pegá tu Access Token. <b>Recomendado:</b> usá una clave dedicada y revisá políticas de seguridad.</p>
+    </div>
+
+    <div class="flex gap-3 justify-end">
+      <button id="saveBtn" class="px-4 py-2 rounded-xl bg-pink-600 text-white font-semibold">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+  import { db } from "/static/js/firebase-config.js";
+  import { collection, query, where, limit, getDocs, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const CURRENT_USER_ID = "{{ session.get('user','') }}";
+  const CREATOR_USERNAME = "{{ session.get('username','') }}"; // asumimos que está logueado y es creator
+
+  let creatorDocRef = null;
+
+  async function loadMine(){
+    const q = query(collection(db,'creators'), where('username','==', CREATOR_USERNAME), limit(1));
+    const s = await getDocs(q);
+    if (s.empty) return;
+    const d = s.docs[0];
+    creatorDocRef = doc(db,'creators',d.id);
+    const data = d.data();
+    document.getElementById('displayNameInput').value = data.displayName || '';
+    document.getElementById('usernameInput').value = data.username || '';
+    document.getElementById('bioInput').value = data.bio || '';
+    document.getElementById('priceInput').value = data.subscriptionPrice || 0;
+    document.getElementById('coverInput').value = data.coverUrl || '';
+    document.getElementById('avatarInput').value = data.avatarUrl || '';
+    document.getElementById('socialInput').value = JSON.stringify(data.socialLinks || {});
+    document.getElementById('mpTokenInput').value = data.mp_access_token || '';
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', async (e)=>{
+    e.preventDefault();
+    if (!creatorDocRef) { alert('Error: perfil no cargado'); return; }
+    let social = {};
+    try { social = JSON.parse(document.getElementById('socialInput').value || '{}'); } catch(e) { alert('Social links debe ser JSON válido'); return; }
+    await setDoc(creatorDocRef, {
+      displayName: document.getElementById('displayNameInput').value,
+      bio: document.getElementById('bioInput').value,
+      subscriptionPrice: Number(document.getElementById('priceInput').value || 0),
+      coverUrl: document.getElementById('coverInput').value || '',
+      avatarUrl: document.getElementById('avatarInput').value || '',
+      socialLinks: social,
+      mp_access_token: document.getElementById('mpTokenInput').value || '',
+      updatedAt: serverTimestamp()
+    }, { merge:true });
+    alert('Perfil actualizado ✔');
+  });
+
+  loadMine();
+</script>

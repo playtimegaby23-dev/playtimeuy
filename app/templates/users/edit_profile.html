@@ -5,9 +5,24 @@
 {% block content %}
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-2xl w-full bg-gray-900 bg-opacity-80 backdrop-blur-xl p-10 rounded-2xl shadow-xl text-white animate-fade-in">
+
     <h2 class="text-3xl font-extrabold text-center mb-6">Editar tu perfil</h2>
-    
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4 space-y-2">
+          {% for category, message in messages %}
+            <div class="p-3 rounded {{ 'bg-green-700 text-green-100' if category=='success' else '' }} {{ 'bg-red-700 text-red-100' if category=='danger' else '' }} {{ 'bg-yellow-600 text-yellow-100' if category=='warning' else '' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <form action="{{ url_for('main.update_profile') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+      <!-- CSRF Token -->
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
       <!-- Foto de perfil -->
       <div>
@@ -22,11 +37,31 @@
         </div>
       </div>
 
-      <!-- Nombre de usuario -->
-      <div>
-        <label class="block text-sm font-medium text-gray-300">Nombre de usuario</label>
-        <input type="text" name="username" value="{{ user_data.username }}" required
-          class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2 focus:ring-pink-500 focus:border-pink-500">
+      <!-- Datos principales -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Nombre de usuario</label>
+          <input type="text" name="username" value="{{ user_data.username }}" required
+            class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2 focus:ring-pink-500 focus:border-pink-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Edad</label>
+          <input type="number" name="age" value="{{ user_data.age or '' }}" min="0"
+            class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Lugar</label>
+          <input type="text" name="location" value="{{ user_data.location or '' }}"
+            class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Nacionalidad</label>
+          <input type="text" name="nationality" value="{{ user_data.nationality or '' }}"
+            class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
+        </div>
       </div>
 
       <!-- Biografía -->
@@ -34,34 +69,34 @@
         <label class="block text-sm font-medium text-gray-300">Biografía</label>
         <textarea name="bio" rows="4"
           class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2 focus:ring-pink-500 focus:border-pink-500 resize-none"
-          placeholder="Contale a tus fans quién sos...">{{ user_data.bio }}</textarea>
+          placeholder="Contale a tus fans quién sos...">{{ user_data.bio or '' }}</textarea>
       </div>
 
       <!-- Redes sociales -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-300">Instagram</label>
-          <input type="url" name="instagram" value="{{ user_data.instagram }}"
+          <input type="url" name="instagram" value="{{ user_data.instagram or '' }}"
             class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-300">Twitter</label>
-          <input type="url" name="twitter" value="{{ user_data.twitter }}"
+          <input type="url" name="twitter" value="{{ user_data.twitter or '' }}"
             class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-300">Telegram</label>
-          <input type="url" name="telegram" value="{{ user_data.telegram }}"
+          <input type="url" name="telegram" value="{{ user_data.telegram or '' }}"
             class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-300">Link promocional</label>
-          <input type="url" name="promo_link" value="{{ user_data.promo_link }}"
+          <input type="url" name="promo_link" value="{{ user_data.promo_link or '' }}"
             class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
         </div>
       </div>
 
-      <!-- Métodos de pago -->
+      <!-- Método de pago (solo visual, no obligatorio) -->
       <div class="pt-4">
         <label class="block text-sm font-medium text-gray-300">Método de cobro preferido</label>
         <select name="payment_method" class="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 text-white p-2">
@@ -78,6 +113,7 @@
           Guardar cambios
         </button>
       </div>
+
     </form>
   </div>
 </div>

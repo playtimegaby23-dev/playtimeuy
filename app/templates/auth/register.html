@@ -2,26 +2,25 @@
 {% block title %}Registro - PlayTimeUY{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-fuchsia-900 via-purple-900 to-black flex items-center justify-center p-6">
-
+<div class="min-h-screen bg-gradient-to-br from-fuchsia-900 via-purple-900 to-black flex items-center justify-center p-4 sm:p-6">
   <div class="flex flex-col lg:flex-row w-full max-w-6xl rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_60px_rgba(236,72,153,0.4)] animate-fadeIn">
 
     <!-- Panel Izquierdo -->
-    <aside class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-700 items-center justify-center relative">
+    <aside class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-700 items-center justify-center relative overflow-hidden">
       <div class="absolute inset-0 bg-black/40 backdrop-blur-md rounded-l-3xl"></div>
-      <div class="z-10 text-center p-8">
-        <img src="{{ url_for('static', filename='img/Registro.png') }}" alt="Registro PlayTimeUY" class="w-64 mx-auto mb-8 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)]">
-        <h1 class="text-5xl font-extrabold text-white tracking-tight">PlayTimeUY</h1>
-        <p class="text-lg text-white/90 mt-4 max-w-md mx-auto leading-relaxed">
+      <div class="z-10 text-center p-8 animate-slideUp">
+        <img src="{{ url_for('static', filename='img/Registro.png') }}" alt="Registro PlayTimeUY" class="w-48 xl:w-64 mx-auto mb-6 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] animate-pulseGlow">
+        <h1 class="text-4xl xl:text-5xl font-extrabold text-white tracking-tight">PlayTimeUY</h1>
+        <p class="text-base xl:text-lg text-white/90 mt-3 xl:mt-4 max-w-md mx-auto leading-relaxed">
           Tu espacio para mostrarte al mundo y quedarte con el <span class="font-bold text-pink-300">100%</span> de tus ganancias.
         </p>
       </div>
     </aside>
 
-    <!-- Formulario -->
-    <section class="flex-1 bg-white/5 backdrop-blur-2xl border-l border-white/20 p-8 md:p-12 text-white">
-      <h2 class="text-4xl font-extrabold text-center text-pink-400 mb-4 drop-shadow-lg">Crear cuenta</h2>
-      <p class="text-center text-gray-300 mb-8">Únete a la plataforma que revoluciona la forma de ganar online</p>
+    <!-- Panel Derecho -->
+    <section class="flex-1 bg-white/5 backdrop-blur-2xl border-l border-white/20 p-6 sm:p-10 lg:p-12 text-white animate-fadeIn">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-center text-pink-400 mb-4 drop-shadow-lg">Crear cuenta</h2>
+      <p class="text-center text-gray-300 mb-8 text-sm sm:text-base">Únete a la plataforma que revoluciona la forma de ganar online</p>
 
       <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -42,117 +41,48 @@
         {% endif %}
       {% endwith %}
 
+      <!-- Formulario -->
       <form id="registroForm" method="POST" action="{{ url_for('main.register') }}" class="space-y-6" novalidate>
+        {{ form.hidden_tag() }}
+
         <!-- Honeypot -->
         <input type="text" name="website" id="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
 
-        <!-- Nombre completo -->
+        {% for field in [form.username, form.email, form.password, form.confirm_password, form.dob, form.country, form.role] %}
         <div>
-          <label for="full_name" class="block text-sm text-gray-300 mb-1">Nombre completo</label>
+          <label for="{{ field.id }}" class="block text-sm text-gray-300 mb-1">{{ field.label.text }}</label>
           <div class="relative">
-            <i class="fas fa-user absolute top-3 left-4 text-pink-400"></i>
-            <input id="full_name" type="text" name="full_name" placeholder="Ej: Juan Pérez" required
-                   class="input-modern pl-12" maxlength="80" autocomplete="name">
+            {% if field.type == 'PasswordField' %}
+              <i class="fas fa-lock absolute top-3 left-4 text-pink-400"></i>
+              {{ field(class="input-modern pl-12 pr-12 w-full", placeholder=field.label.text) }}
+              <button type="button" class="toggle-pass absolute top-2 right-2 text-gray-400 hover:text-pink-400 transition" data-target="{{ field.id }}" aria-label="Mostrar u ocultar contraseña">
+                <i class="far fa-eye"></i>
+              </button>
+            {% elif field.type == 'StringField' or field.type == 'EmailField' %}
+              <i class="fas fa-at absolute top-3 left-4 text-pink-400"></i>
+              {{ field(class="input-modern pl-12 w-full", placeholder=field.label.text) }}
+            {% else %}
+              {{ field(class="input-modern w-full") }}
+            {% endif %}
           </div>
+          {% if field.errors %}
+            <p class="text-red-400 text-xs mt-1">{{ field.errors[0] }}</p>
+          {% endif %}
         </div>
-
-        <!-- Usuario -->
-        <div>
-          <label for="username" class="block text-sm text-gray-300 mb-1">Nombre de usuario</label>
-          <div class="relative">
-            <i class="fas fa-at absolute top-3 left-4 text-pink-400"></i>
-            <input id="username" type="text" name="username" placeholder="Tu usuario" required
-                   class="input-modern pl-12" pattern="^[a-zA-Z0-9_\.]{3,20}$"
-                   title="3-20 caracteres: letras, números, _ o ." autocomplete="username">
-          </div>
-        </div>
-
-        <!-- Email -->
-        <div>
-          <label for="email" class="block text-sm text-gray-300 mb-1">Correo electrónico</label>
-          <div class="relative">
-            <i class="fas fa-envelope absolute top-3 left-4 text-pink-400"></i>
-            <input id="email" type="email" name="email" placeholder="correo@ejemplo.com" required
-                   class="input-modern pl-12" maxlength="120" autocomplete="email">
-          </div>
-        </div>
-
-        <!-- Contraseña -->
-        <div>
-          <label for="password" class="block text-sm text-gray-300 mb-1">Contraseña</label>
-          <div class="relative">
-            <i class="fas fa-lock absolute top-3 left-4 text-pink-400"></i>
-            <input id="password" type="password" name="password" placeholder="********" required
-                   class="input-modern pl-12 pr-12" minlength="6" autocomplete="new-password">
-            <button type="button" class="toggle-pass" data-target="password" aria-label="Mostrar u ocultar contraseña">
-              <i class="far fa-eye"></i>
-            </button>
-          </div>
-          <p id="pwdHint" class="text-xs text-gray-300 mt-1">Mínimo 6 caracteres. Recomendado: mayúsculas, minúsculas y números.</p>
-          <div id="pwdMeter" class="h-1 w-full bg-white/10 rounded mt-2"><div class="h-1 w-0 bg-pink-500 rounded transition-all"></div></div>
-        </div>
-
-        <!-- Confirmar contraseña -->
-        <div>
-          <label for="confirm_password" class="block text-sm text-gray-300 mb-1">Confirmar contraseña</label>
-          <div class="relative">
-            <i class="fas fa-lock absolute top-3 left-4 text-pink-400"></i>
-            <input id="confirm_password" type="password" name="confirm_password" placeholder="********" required
-                   class="input-modern pl-12 pr-12" minlength="6" autocomplete="new-password">
-            <button type="button" class="toggle-pass" data-target="confirm_password" aria-label="Mostrar u ocultar contraseña">
-              <i class="far fa-eye"></i>
-            </button>
-          </div>
-          <p id="matchMsg" class="text-xs mt-1"></p>
-        </div>
-
-        <!-- Fecha y país -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label for="dob" class="block text-sm text-gray-300 mb-1">Fecha de nacimiento</label>
-            <input id="dob" type="date" name="dob" required class="input-modern" autocomplete="bday">
-          </div>
-          <div>
-            <label for="country" class="block text-sm text-gray-300 mb-1">País</label>
-            <input id="country" type="text" name="country" placeholder="Ej: Uruguay" required class="input-modern" maxlength="56" autocomplete="country-name">
-          </div>
-        </div>
-
-        <!-- Redes -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label for="twitter" class="block text-sm text-gray-300 mb-1">Twitter (opcional)</label>
-            <input id="twitter" type="text" name="twitter" placeholder="@usuario" class="input-modern" maxlength="40" autocomplete="off">
-          </div>
-          <div>
-            <label for="instagram" class="block text-sm text-gray-300 mb-1">Instagram (opcional)</label>
-            <input id="instagram" type="text" name="instagram" placeholder="@usuario" class="input-modern" maxlength="40" autocomplete="off">
-          </div>
-        </div>
-
-        <!-- Rol -->
-        <div>
-          <label for="role" class="block text-sm text-gray-300 mb-1">Selecciona tu rol</label>
-          <select id="role" name="role" required class="input-modern">
-            <option value="" disabled selected>Selecciona tu rol</option>
-            <option value="creator">Creador/a</option>
-            <option value="buyer">Comprador/a</option>
-            <option value="promoter">Promotor/a</option>
-          </select>
-        </div>
+        {% endfor %}
 
         <!-- Términos -->
         <div class="flex items-start gap-3 text-sm text-gray-300">
-          <input id="terms" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/30 bg-white/10" required>
+          {{ form.terms(id="terms", class="mt-1 h-4 w-4 rounded border-white/30 bg-white/10") }}
           <label for="terms">Acepto los <a href="{{ url_for('main.index') }}#terminos" class="underline text-pink-400 hover:text-white">Términos y Condiciones</a>.</label>
         </div>
+        {% if form.terms.errors %}
+          <p class="text-red-400 text-xs mt-1">{{ form.terms.errors[0] }}</p>
+        {% endif %}
 
         <!-- Botón -->
         <div>
-          <button id="submitBtn" type="submit" class="btn-3d w-full py-3 text-lg font-bold rounded-2xl tracking-wide flex items-center justify-center gap-2">
-            <span>Registrarme</span>
-            <span id="btnSpinner" class="hidden h-5 w-5 border-2 border-white/60 border-t-transparent rounded-full animate-spin"></span>
-          </button>
+          {{ form.submit(class="btn-3d w-full py-3 text-lg font-bold rounded-2xl tracking-wide flex items-center justify-center gap-2 hover:scale-105 transition-all duration-300") }}
         </div>
       </form>
 
@@ -164,115 +94,68 @@
   </div>
 </div>
 
+<!-- JS toggle password y validación básica -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Toggle password
+  document.querySelectorAll(".toggle-pass").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(btn.dataset.target);
+      if(target) target.type = target.type === "password" ? "text" : "password";
+    });
+  });
+
+  // Validación simple antes de enviar
+  const form = document.getElementById("registroForm");
+  form.addEventListener("submit", e => {
+    let valid = true;
+    form.querySelectorAll("input[required]").forEach(inp => {
+      if(!inp.value.trim()) {
+        valid = false;
+        inp.classList.add("border-red-400");
+      } else {
+        inp.classList.remove("border-red-400");
+      }
+    });
+    if(!valid) e.preventDefault();
+  });
+});
+</script>
+
 <style>
 /* Animaciones */
-@keyframes fadeIn {0% {opacity:0; transform:translateY(20px);} 100% {opacity:1; transform:translateY(0);}}
-@keyframes slideIn {0% {opacity:0; transform:translateX(-20px);} 100% {opacity:1; transform:translateX(0);}}
-.animate-fadeIn { animation: fadeIn .8s ease-out forwards; }
-.animate-slideIn { animation: slideIn .5s ease-out forwards; }
+@keyframes fadeIn { 0% {opacity:0; transform:translateY(10px);} 100% {opacity:1; transform:translateY(0);} }
+.animate-fadeIn { animation:fadeIn 0.7s ease-in-out forwards; }
+
+@keyframes slideUp { 0% {opacity:0; transform:translateY(20px);} 100% {opacity:1; transform:translateY(0);} }
+.animate-slideUp { animation:slideUp 0.7s ease forwards; }
+
+@keyframes pulseGlow { 0% {box-shadow:0 0 0 rgba(236,72,153,.2);} 100% {box-shadow:0 0 25px rgba(236,72,153,.35);} }
+.animate-pulseGlow { animation:pulseGlow 2s ease-in-out infinite alternate; }
 
 /* Inputs modernos */
 .input-modern {
-  width:100%; padding:0.75rem 1rem;
-  border-radius:0.75rem; background:rgba(255,255,255,0.10);
-  border:1px solid transparent; color:#fff; caret-color:#fff;
-  transition:all .3s; box-shadow: inset 0 -2px 0 rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s;
 }
-.input-modern::placeholder{color:#9CA3AF;}
 .input-modern:focus {
-  outline:none; background:rgba(255,255,255,0.08);
-  box-shadow:0 0 15px rgba(236,72,153,0.6), inset 0 -2px 0 #ec4899;
-  border-color:#ec4899;
+  border-color: #ec4899;
+  background: rgba(236,72,153,0.05);
+  outline: none;
+  box-shadow: 0 0 8px rgba(236,72,153,0.4);
 }
 
 /* Botón 3D */
 .btn-3d {
-  background: linear-gradient(90deg, #ec4899, #d946ef, #9333ea);
-  box-shadow: 0 6px 15px rgba(217,70,239,0.5), inset 0 -3px 0 rgba(0,0,0,0.2);
-  transition: transform .2s, box-shadow .2s, background .2s;
+  background: linear-gradient(145deg,#ec4899,#d946ef);
+  box-shadow: 0 6px #c026d3;
 }
 .btn-3d:hover {
   transform: translateY(-2px);
-  background: linear-gradient(90deg, #f472b6, #e879f9, #a855f7);
-  box-shadow: 0 10px 25px rgba(217,70,239,0.7);
-}
-.btn-3d:active {
-  transform: translateY(2px);
-  box-shadow: inset 0 3px 10px rgba(217,70,239,0.4);
-}
-
-/* Toggle password */
-.toggle-pass {
-  position:absolute; right:.75rem; top:.5rem;
-  background:transparent; border:0; color:#E9D5FF; cursor:pointer;
+  box-shadow: 0 8px #c026d3;
 }
 </style>
-
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-<script>
-document.addEventListener("DOMContentLoaded", ()=>{
-  const emailInput = document.getElementById('email');
-  const userInput  = document.getElementById('username');
-  const pwd = document.getElementById('password');
-  const pwd2 = document.getElementById('confirm_password');
-  const meter = document.querySelector('#pwdMeter > div');
-  const matchMsg = document.getElementById('matchMsg');
-  const form = document.getElementById('registroForm');
-  const btn = document.getElementById('submitBtn');
-  const spinner = document.getElementById('btnSpinner');
-
-  // Autofill username
-  emailInput.addEventListener('blur', () => {
-    if (!userInput.value && emailInput.value.includes('@')) {
-      userInput.value = emailInput.value.split('@')[0].replace(/[^a-zA-Z0-9_.]/g,'');
-    }
-  });
-
-  // Toggle password
-  document.querySelectorAll('.toggle-pass').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const target = document.getElementById(btn.dataset.target);
-      target.type = target.type === 'password' ? 'text' : 'password';
-      btn.innerHTML = target.type === 'password' ? '<i class="far fa-eye"></i>' : '<i class="far fa-eye-slash"></i>';
-    });
-  });
-
-  // Fuerza de contraseña
-  pwd.addEventListener('input', ()=>{
-    let score = 0, v = pwd.value;
-    if (v.length >= 6) score++;
-    if (/[A-Z]/.test(v)) score++;
-    if (/[a-z]/.test(v)) score++;
-    if (/[0-9]/.test(v)) score++;
-    if (/[^A-Za-z0-9]/.test(v)) score++;
-    meter.style.width = (score*20) + '%';
-  });
-
-  // Coincidencia
-  function checkMatch(){
-    if (!pwd.value || !pwd2.value) { matchMsg.textContent=''; return; }
-    if (pwd.value === pwd2.value){
-      matchMsg.textContent = 'Las contraseñas coinciden.';
-      matchMsg.className = 'text-xs mt-1 text-green-300';
-    } else {
-      matchMsg.textContent = 'Las contraseñas no coinciden.';
-      matchMsg.className = 'text-xs mt-1 text-red-300';
-    }
-  }
-  pwd.addEventListener('input', checkMatch);
-  pwd2.addEventListener('input', checkMatch);
-
-  // Submit seguro
-  form.addEventListener('submit', (e)=>{
-    if (document.getElementById('website').value) { e.preventDefault(); return; }
-    if (pwd.value !== pwd2.value){
-      e.preventDefault();
-      alert('Las contraseñas no coinciden.');
-      return;
-    }
-    btn.setAttribute('disabled', 'disabled');
-    spinner.classList.remove('hidden');
-  });
-});
-</script>
 {% endblock %}

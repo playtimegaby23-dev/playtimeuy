@@ -3,32 +3,35 @@
 {% block title %}Iniciar sesión - PlayTimeUY{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e1b2e] px-4 py-10">
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-12">
   <main
-    class="w-full max-w-md p-8 sm:p-10 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl text-white animate-fadeIn"
-    aria-labelledby="login-title">
+    class="w-full max-w-md p-8 sm:p-10 bg-slate-900/70 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl text-white animate-fadeIn"
+    aria-labelledby="login-title" role="main">
 
     <!-- Logo -->
-    <div class="flex justify-center mb-6">
-      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PlayTimeUY Logo" class="h-12 sm:h-14 drop-shadow-lg" loading="lazy">
+    <div class="flex justify-center mb-8">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" 
+           alt="Logo de PlayTimeUY" 
+           class="h-14 sm:h-16 drop-shadow-lg hover:scale-105 transition-transform duration-300" 
+           loading="lazy" width="64" height="64">
     </div>
 
     <!-- Título -->
-    <h1 id="login-title" class="text-2xl sm:text-3xl font-extrabold text-center text-pink-500 mb-6 sm:mb-8 tracking-wide">
-      Iniciar sesión
+    <h1 id="login-title" class="text-3xl sm:text-4xl font-extrabold text-center text-pink-400 mb-8 tracking-wide">
+      Bienvenido de nuevo
     </h1>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="space-y-3 mb-6" role="alert" aria-live="assertive">
+        <div class="space-y-3 mb-6" role="alert" aria-live="polite">
           {% for category, message in messages %}
             <div
-              class="px-5 py-3 rounded-lg text-sm font-semibold shadow-md
-              {% if category == 'danger' %} bg-red-600/90
-              {% elif category == 'success' %} bg-green-600/90
-              {% elif category == 'warning' %} bg-yellow-500/90
-              {% else %} bg-blue-600/90 {% endif %}">
+              class="px-5 py-3 rounded-lg text-sm font-medium shadow-md transition-all duration-300
+              {% if category == 'danger' %} bg-red-600/90 text-white
+              {% elif category == 'success' %} bg-green-600/90 text-white
+              {% elif category == 'warning' %} bg-yellow-500/90 text-black
+              {% else %} bg-blue-600/90 text-white {% endif %}">
               {{ message }}
             </div>
           {% endfor %}
@@ -36,9 +39,9 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Form -->
+    <!-- Formulario -->
     <form id="loginForm" method="POST" action="{{ url_for('main.login') }}" class="space-y-6" autocomplete="off" novalidate>
-      {# Si usás Flask-WTF, habilitá: {{ form.csrf_token }} #}
+      {{ form.csrf_token() if form else "" }}
 
       <!-- Email -->
       <div>
@@ -52,13 +55,14 @@
           autocomplete="username"
           placeholder="tucorreo@ejemplo.com"
           value="{{ (request.form.get('email') or '') | e }}"
-          class="w-full px-5 py-3 rounded-lg bg-gray-900/80 text-white placeholder-gray-400 border border-gray-700 focus:ring-4 focus:ring-pink-500 focus:outline-none transition duration-300 shadow-inner"
-          aria-describedby="emailHelp"
+          class="w-full px-5 py-3 rounded-lg bg-gray-800/90 text-white placeholder-gray-400 border border-gray-600 focus:ring-4 focus:ring-pink-500 focus:border-pink-500 focus:outline-none transition duration-300 shadow-inner"
+          aria-describedby="emailHelp emailError"
         />
-        <p id="emailHelp" class="mt-1 text-xs text-gray-400">Usá el mismo correo registrado en Firebase.</p>
+        <p id="emailHelp" class="mt-1 text-xs text-gray-400">Ingresá el correo con el que te registraste.</p>
+        <p id="emailError" class="hidden mt-1 text-xs text-red-400">⚠️ Correo inválido.</p>
       </div>
 
-      <!-- Password -->
+      <!-- Contraseña -->
       <div class="relative">
         <label for="password" class="block text-sm text-pink-300 mb-2 font-medium">Contraseña</label>
         <input
@@ -68,17 +72,17 @@
           required
           autocomplete="current-password"
           placeholder="••••••••"
-          class="w-full px-5 py-3 pr-14 rounded-lg bg-gray-900/80 text-white placeholder-gray-400 border border-gray-700 focus:ring-4 focus:ring-pink-500 focus:outline-none transition duration-300 shadow-inner"
-          aria-describedby="pwdHelp capsLockHint"
+          class="w-full px-5 py-3 pr-14 rounded-lg bg-gray-800/90 text-white placeholder-gray-400 border border-gray-600 focus:ring-4 focus:ring-pink-500 focus:border-pink-500 focus:outline-none transition duration-300 shadow-inner"
+          aria-describedby="pwdHelp capsLockHint passwordError"
         />
         <!-- Toggle password -->
         <button
           type="button"
           id="togglePasswordBtn"
-          class="absolute right-4 top-11 text-gray-400 hover:text-pink-400 focus:outline-none"
+          class="absolute right-4 top-10 text-gray-400 hover:text-pink-400 focus:outline-none"
           aria-label="Mostrar u ocultar contraseña">
           <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pointer-events-none" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -86,7 +90,8 @@
           </svg>
         </button>
         <p id="pwdHelp" class="mt-1 text-xs text-gray-400">Distingue mayúsculas y minúsculas.</p>
-        <p id="capsLockHint" class="mt-1 text-xs text-yellow-400 hidden">Caps Lock está activado.</p>
+        <p id="capsLockHint" class="mt-1 text-xs text-yellow-400 hidden">⚠️ Caps Lock está activado.</p>
+        <p id="passwordError" class="hidden mt-1 text-xs text-red-400">⚠️ La contraseña es obligatoria.</p>
       </div>
 
       <!-- Opciones -->
@@ -105,7 +110,7 @@
       <button
         id="submitBtn"
         type="submit"
-        class="w-full bg-pink-600 hover:bg-pink-700 focus:ring-4 focus:ring-pink-400 font-bold py-3 rounded-full shadow-lg hover:shadow-pink-700/60 transition duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+        class="w-full bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 focus:ring-4 focus:ring-pink-400 font-bold py-3 rounded-full shadow-lg hover:shadow-pink-700/60 transition duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
         aria-label="Ingresar">
         <span id="btnText">Ingresar</span>
         <span id="btnSpinner" class="hidden ml-2 inline-block align-[-2px] animate-spin border-2 border-white/40 border-t-white rounded-full w-4 h-4"></span>
@@ -122,69 +127,61 @@
   </main>
 </div>
 
-<!-- Animación FadeIn -->
 <style>
   @keyframes fadeIn { 
     0% { opacity: 0; transform: translateY(30px); } 
     100% { opacity: 1; transform: translateY(0); } 
   }
   .animate-fadeIn { animation: fadeIn 0.6s ease forwards; }
+  @media (prefers-reduced-motion: reduce) { .animate-fadeIn { animation: none; opacity: 1; transform: none; } }
 </style>
 
-<!-- JS -->
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const email = document.getElementById("email");
-    const pwd = document.getElementById("password");
-    const toggleBtn = document.getElementById("togglePasswordBtn");
-    const eyeIcon = document.getElementById("eyeIcon");
-    const form = document.getElementById("loginForm");
-    const submitBtn = document.getElementById("submitBtn");
-    const btnText = document.getElementById("btnText");
-    const btnSpinner = document.getElementById("btnSpinner");
-    const capsHint = document.getElementById("capsLockHint");
+<script type="module">
+import { ptuy } from "{{ url_for('static', filename='js/playtimeuy.js') }}"; // helpers globales si necesitás
+document.addEventListener("DOMContentLoaded", () => {
+  const email = document.getElementById("email");
+  const pwd = document.getElementById("password");
+  const toggleBtn = document.getElementById("togglePasswordBtn");
+  const eyeIcon = document.getElementById("eyeIcon");
+  const form = document.getElementById("loginForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const btnText = document.getElementById("btnText");
+  const btnSpinner = document.getElementById("btnSpinner");
+  const capsHint = document.getElementById("capsLockHint");
+  const emailError = document.getElementById("emailError");
+  const pwdError = document.getElementById("passwordError");
 
-    if (!email.value) email.focus();
+  // Toggle password
+  const showSVG = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a10.056 10.056 0 013.127-4.43m1.812-1.388A9.965 9.965 0 0112 5c4.478 0 8.269 2.943 9.543 7a10.055 10.055 0 01-4.043 5.195M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />`;
+  const hideSVG = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
 
-    // Toggle Password
-    const showSVG =
-      `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.943-9.543-7a10.056 10.056 0 013.127-4.43m1.812-1.388A9.965 9.965 0 0112 5c4.478 0 8.269 2.943 9.543 7a10.055 10.055 0 01-4.043 5.195M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />`;
-    const hideSVG =
-      `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+  toggleBtn.addEventListener("click", () => {
+    if (pwd.type === "password") { pwd.type = "text"; eyeIcon.innerHTML = showSVG; }
+    else { pwd.type = "password"; eyeIcon.innerHTML = hideSVG; }
+  });
 
-    toggleBtn.addEventListener("click", () => {
-      if (pwd.type === "password") {
-        pwd.type = "text"; eyeIcon.innerHTML = showSVG;
-      } else {
-        pwd.type = "password"; eyeIcon.innerHTML = hideSVG;
-      }
-    });
+  // Caps Lock detection
+  ["keyup","keydown"].forEach(evt => pwd.addEventListener(evt, e => capsHint.classList.toggle("hidden", !e.getModifierState("CapsLock"))));
 
-    // Caps Lock hint
-    const updateCapsHint = (e) => {
-      const caps = e.getModifierState && e.getModifierState("CapsLock");
-      capsHint.classList.toggle("hidden", !caps);
-    };
-    ["keyup", "keydown"].forEach(evt => pwd.addEventListener(evt, updateCapsHint));
+  // Validación simple
+  form.addEventListener("submit", (e) => {
+    let valid = true;
+    emailError.classList.add("hidden");
+    pwdError.classList.add("hidden");
 
-    // Validación simple + loading
-    form.addEventListener("submit", (e) => {
-      const emailVal = email.value.trim();
-      const pwdVal = pwd.value;
+    const emailVal = email.value.trim();
+    const pwdVal = pwd.value;
 
-      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal);
-      if (!emailOk || !pwdVal) {
-        e.preventDefault();
-        alert("Revisá tu correo y contraseña.");
-        return;
-      }
+    if (!ptuy.validateEmail(emailVal)) { emailError.classList.remove("hidden"); email.focus(); valid=false; }
+    if (!ptuy.validateNotEmpty(pwdVal)) { pwdError.classList.remove("hidden"); if(valid) pwd.focus(); valid=false; }
 
+    if (!valid) e.preventDefault();
+    else {
       submitBtn.disabled = true;
       btnText.textContent = "Ingresando…";
       btnSpinner.classList.remove("hidden");
-    });
+    }
   });
+});
 </script>
 {% endblock %}

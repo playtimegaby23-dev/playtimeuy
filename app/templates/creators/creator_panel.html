@@ -4,33 +4,57 @@
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center px-4 py-10">
-    <div class="w-full max-w-5xl p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
-        <h2 class="text-3xl font-extrabold text-white text-center mb-2 animate-fade-in-down">Panel del Creador</h2>
-        <p class="text-lg text-gray-300 text-center mb-8">Subí, editá y administrá tu contenido exclusivo</p>
+    <div class="w-full max-w-6xl p-8 bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20">
+        <!-- Título -->
+        <h2 class="text-4xl sm:text-5xl font-extrabold text-white text-center mb-2 animate-fade-in-down">
+            Panel del Creador
+        </h2>
+        <p class="text-lg sm:text-xl text-gray-300 text-center mb-10 animate-fade-in-down delay-100">
+            Subí, editá y administrá tu contenido exclusivo
+        </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <a href="{{ url_for('main.upload_content') }}" class="creator-card">
-                📤 Subir nuevo contenido
+        <!-- Cards principales -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a href="{{ url_for('main.upload_content') }}" class="creator-card group">
+                <span class="icon animate-bounce mr-2">📤</span>
+                <span class="card-text">Subir nuevo contenido</span>
+                <span class="tooltip">Cargá videos, fotos o posts para tus fans.</span>
             </a>
-            <a href="{{ url_for('main.my_posts') }}" class="creator-card">
-                🗂️ Ver mis publicaciones
+            <a href="{{ url_for('main.my_posts') }}" class="creator-card group relative">
+                <span class="icon mr-2">🗂️</span>
+                <span class="card-text">Ver mis publicaciones</span>
+                <span class="badge">3</span>
+                <span class="tooltip">Revisá, editá o eliminá tus publicaciones.</span>
             </a>
-            <a href="{{ url_for('main.stats') }}" class="creator-card">
-                📈 Estadísticas de vistas y ganancias
+            <a href="{{ url_for('main.stats') }}" class="creator-card group">
+                <span class="icon mr-2">📈</span>
+                <span class="card-text">Estadísticas de vistas y ganancias</span>
+                <span class="tooltip">Visualizá ingresos, visitas y métricas detalladas.</span>
             </a>
-            <a href="{{ url_for('main.messages') }}" class="creator-card">
-                💬 Responder mensajes de fans
+            <a href="{{ url_for('main.messages') }}" class="creator-card group relative">
+                <span class="icon mr-2">💬</span>
+                <span class="card-text">Responder mensajes de fans</span>
+                <span class="badge">5</span>
+                <span class="tooltip">Gestioná mensajes pendientes de respuesta.</span>
             </a>
-            <a href="{{ url_for('main.profile') }}" class="creator-card">
-                👤 Editar mi perfil
+            <a href="{{ url_for('main.profile') }}" class="creator-card group">
+                <span class="icon mr-2">👤</span>
+                <span class="card-text">Editar mi perfil</span>
+                <span class="tooltip">Modificá tu información personal y avatar.</span>
             </a>
-            <a href="{{ url_for('main.settings') }}" class="creator-card">
-                ⚙️ Configuración
+            <a href="{{ url_for('main.settings') }}" class="creator-card group">
+                <span class="icon mr-2">⚙️</span>
+                <span class="card-text">Configuración</span>
+                <span class="tooltip">Ajustes de seguridad, notificaciones y preferencias.</span>
             </a>
         </div>
 
-        <div class="text-center mt-10">
-            <a href="{{ url_for('main.logout') }}" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl transition-all duration-300">Cerrar sesión</a>
+        <!-- Botón de logout -->
+        <div class="text-center mt-12">
+            <a href="{{ url_for('main.logout') }}"
+               class="inline-block bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-red-400 hover:shadow-red-500/60 animate-pulse">
+                Cerrar sesión
+            </a>
         </div>
     </div>
 </div>
@@ -38,23 +62,105 @@
 
 {% block styles %}
 <style>
+/* Cards del panel */
+.creator-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: rgba(255,255,255,0.1);
+    backdrop-blur: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    font-weight: 600;
+    font-size: 1.125rem;
+    padding: 1.5rem 1rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    transition: all 0.35s ease-in-out;
+    overflow: hidden;
+}
+.creator-card:hover, .creator-card:focus {
+    background-color: rgba(255,255,255,0.2);
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    outline: none;
+}
+
+/* Iconos y animación */
+.creator-card .icon {
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+}
+.creator-card:hover .icon {
+    transform: rotate(15deg) scale(1.2);
+}
+
+/* Tooltip */
+.creator-card .tooltip {
+    position: absolute;
+    bottom: -2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+.creator-card:hover .tooltip {
+    bottom: -3.5rem;
+    opacity: 1;
+}
+
+/* Badge */
+.creator-card .badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: #ff3b3b;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* Animaciones de entrada */
+@keyframes fade-in-down {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+    animation: fade-in-down 0.7s ease-out forwards;
+}
+
+/* Bounce icon animation */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+.animate-bounce {
+    animation: bounce 1.2s infinite;
+}
+
+/* Responsividad y accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-down,
+    .animate-bounce {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
     .creator-card {
-        @apply flex items-center justify-center text-center bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold text-lg py-6 px-4 rounded-2xl shadow-md hover:bg-white/20 transition duration-300 ease-in-out;
+        transition: none;
     }
-
-    @keyframes fade-in-down {
-        0% {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .animate-fade-in-down {
-        animation: fade-in-down 0.7s ease-out;
-    }
+}
 </style>
 {% endblock %}

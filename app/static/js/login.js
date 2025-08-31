@@ -1,134 +1,171 @@
-import { auth, db, doc, getDoc, collection, query, where, getDocs } from "./firebase-config.js";
+// login.js - Versión modular mejorada
+import { auth, db, doc, getDoc, collection, query, where, getDocs, limit } from "./firebase-config.js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Swal from "sweetalert2";
 
+// =========================
+// 🔹 Utilidades Generales
+// =========================
+const animateError = (input) => {
+  input.classList.add("border-red-500", "animate-shake");
+  setTimeout(() => input.classList.remove("animate-shake"), 400);
+};
+
+const showError = (title, message) => {
+  Swal.fire({
+    icon: "error",
+    title,
+    text: message,
+    background: "#1f1f2e",
+    color: "#fff",
+    confirmButtonColor: "#ef4444",
+    showClass: { popup: "animate__animated animate__shakeX" },
+  });
+};
+
+const showLoading = (title = "Procesando...", text = "Por favor espera") => {
+  Swal.fire({
+    title,
+    text,
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
+    background: "#1f1f2e",
+    color: "#fff",
+  });
+};
+
+// =========================
+// 🔹 Validaciones
+// =========================
+const validate = {
+  required: (input) => {
+    const valid = input.value.trim() !== "";
+    if (!valid) animateError(input);
+    return valid;
+  },
+  password: (input) => {
+    const valid = input.value.trim().length >= 6;
+    if (!valid) animateError(input);
+    return valid;
+  },
+};
+
+// =========================
+// 🔹 Firebase Helpers
+// =========================
+const resolveEmailFromUsername = async (username) => {
+  try {
+    const q = query(collection(db, "usuarios"), where("username", "==", username.trim()), limit(1));
+    const snapshot = await getDocs(q);
+    return !snapshot.empty ? snapshot.docs[0].data().email : null;
+  } catch (err) {
+    console.error("❌ Error buscando username:", err);
+    return null;
+  }
+};
+
+const getUserRole = async (uid) => {
+  try {
+    const docRef = doc(db, "usuarios", uid);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? (docSnap.data().role || "comprador") : "comprador";
+  } catch (err) {
+    console.error("❌ Error obteniendo rol:", err);
+    return "comprador";
+  }
+};
+
+// =========================
+// 🔹 Inicialización
+// =========================
 document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("loginForm");
-    if (!form) return console.error("❌ No se encontró el formulario con id='loginForm'");
+  const form = document.getElementById("loginForm");
+  if (!form) return console.error("❌ No se encontró el formulario con id='loginForm'");
 
-    const userInput = form.querySelector("input[name='user']"); // email o username
-    const passInput = form.querySelector("input[name='password']");
+  const userInput = form.querySelector("input[name='user']");
+  const passInput = form.querySelector("input[name='password']");
 
-    // 🔹 Animación de error
-    const animateError = (input) => {
-        input.classList.add("border-red-500", "animate-shake");
-        setTimeout(() => input.classList.remove("animate-shake"), 400);
-    };
+  let failedAttempts = 0;
 
-    // 🔹 Validaciones
-    const validateRequired = (input) => {
-        const valid = input.value.trim() !== "";
-        if (!valid) animateError(input);
-        return valid;
-    };
+  // 🔹 Validación en tiempo real
+  userInput.addEventListener("input", () => validate.required(userInput));
+  passInput.addEventListener("input", () => validate.password(passInput));
 
-    const validatePassword = (input) => {
-        const valid = input.value.trim().length >= 6;
-        if (!valid) animateError(input);
-        return valid;
-    };
+  // 🔹 Toggle de contraseña
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.innerText = "👁️";
+  toggleBtn.className = "ml-2 text-gray-400 hover:text-white transition";
+  passInput.insertAdjacentElement("afterend", toggleBtn);
 
-    // 🔹 Validación en tiempo real
-    userInput.addEventListener("input", () => validateRequired(userInput));
-    passInput.addEventListener("input", () => validatePassword(passInput));
+  toggleBtn.addEventListener("click", () => {
+    passInput.type = passInput.type === "password" ? "text" : "password";
+    toggleBtn.innerText = passInput.type === "password" ? "👁️" : "🙈";
+  });
 
-    // 🔹 Obtener email desde username
-    const resolveEmailFromUsername = async (username) => {
-        try {
-            const q = query(collection(db, "usuarios"), where("username", "==", username.trim()));
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) return snapshot.docs[0].data().email;
-            return null;
-        } catch (err) {
-            console.error("❌ Error buscando username:", err);
-            return null;
+  // =========================
+  // 🔹 Envío del formulario
+  // =========================
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (!validate.required(userInput) || !validate.password(passInput)) {
+      return showError("Error", "Por favor completa todos los campos correctamente.");
+    }
+
+    try {
+      showLoading("Iniciando sesión...", "Verificando tus credenciales");
+
+      let email = userInput.value.trim();
+
+      // Si no es email, buscar por username
+      if (!email.includes("@")) {
+        const resolvedEmail = await resolveEmailFromUsername(email);
+        if (!resolvedEmail) {
+          Swal.close();
+          return showError("Usuario no encontrado", "Revisa tu nombre de usuario o regístrate.");
         }
-    };
+        email = resolvedEmail;
+      }
 
-    // 🔹 Obtener rol del usuario
-    const getUserRole = async (uid) => {
-        try {
-            const docRef = doc(db, "usuarios", uid);
-            const docSnap = await getDoc(docRef);
-            return docSnap.exists() ? docSnap.data().role : null;
-        } catch (err) {
-            console.error("❌ Error obteniendo rol:", err);
-            return null;
-        }
-    };
+      // 🔹 Login con Firebase Auth
+      const { user } = await signInWithEmailAndPassword(auth, email, passInput.value);
 
-    // 🔹 Envío del formulario
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+      // 🔹 Obtener rol
+      const role = await getUserRole(user.uid);
 
-        if (!validateRequired(userInput) || !validatePassword(passInput)) {
-            return Swal.fire("Error", "Por favor completa todos los campos correctamente.", "error");
-        }
+      Swal.close();
+      failedAttempts = 0; // resetear intentos fallidos
 
-        try {
-            Swal.fire({
-                title: "Iniciando sesión...",
-                text: "Por favor espera",
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading(),
-                background: "#1f1f2e",
-                color: "#fff"
-            });
+      // 🔹 Redirección según rol
+      const routes = {
+        comprador: "/users/comprador",
+        vendedor: "/users/vendedor",
+        creator: "/creators/perfil_creator",
+        admin: "/admin/admindashboard",
+        promotor: "/users/promotor",
+      };
+      window.location.href = routes[role] || "/home/index";
 
-            let email = userInput.value.trim();
+    } catch (error) {
+      failedAttempts++;
+      console.error("❌ Error al iniciar sesión:", error);
 
-            // Si no es email, buscar por username
-            if (!email.includes("@")) {
-                const resolvedEmail = await resolveEmailFromUsername(email);
-                if (!resolvedEmail) {
-                    return Swal.fire({
-                        icon: "error",
-                        title: "Usuario no encontrado",
-                        text: "Revisa tu nombre de usuario o regístrate.",
-                        background: "#1f1f2e",
-                        color: "#fff"
-                    });
-                }
-                email = resolvedEmail;
-            }
+      let mensaje = "Ocurrió un error inesperado.";
+      switch (error.code) {
+        case "auth/user-not-found": mensaje = "El usuario no existe."; break;
+        case "auth/wrong-password": mensaje = "Contraseña incorrecta."; break;
+        case "auth/invalid-email": mensaje = "Correo inválido."; break;
+        case "auth/too-many-requests": mensaje = "Demasiados intentos fallidos. Intenta más tarde."; break;
+      }
 
-            // 🔹 Login con Firebase Auth
-            const userCredential = await signInWithEmailAndPassword(auth, email, passInput.value);
-            const user = userCredential.user;
+      if (failedAttempts >= 3 && error.code !== "auth/too-many-requests") {
+        mensaje += " ⚠️ Si fallas demasiadas veces tu cuenta será bloqueada temporalmente.";
+      }
 
-            // 🔹 Obtener rol
-            const role = await getUserRole(user.uid);
-
-            Swal.close();
-
-            // 🔹 Redirección según rol
-            switch (role) {
-                case "comprador": window.location.href = "/users/comprador"; break;
-                case "vendedor": window.location.href = "/users/vendedor"; break;
-                case "creator": window.location.href = "/creators/perfil_creator"; break;
-                case "admin": window.location.href = "/admin/admindashboard"; break;
-                case "promotor": window.location.href = "/users/promotor"; break;
-                default: window.location.href = "/home/index"; break;
-            }
-
-        } catch (error) {
-            console.error("❌ Error al iniciar sesión:", error);
-            let mensaje = "Ocurrió un error inesperado.";
-            if (error.code === "auth/user-not-found") mensaje = "El usuario no existe.";
-            else if (error.code === "auth/wrong-password") mensaje = "Contraseña incorrecta.";
-            else if (error.code === "auth/invalid-email") mensaje = "Correo inválido.";
-            else if (error.code === "auth/too-many-requests") mensaje = "Demasiados intentos fallidos. Intenta más tarde.";
-
-            Swal.fire({
-                icon: "error",
-                title: "Error al iniciar sesión",
-                text: mensaje,
-                background: "#1f1f2e",
-                color: "#fff",
-                confirmButtonColor: "#ef4444"
-            });
-        }
-    });
+      showError("Error al iniciar sesión", mensaje);
+    }
+  });
 });
 
 // 🔹 Animación Shake (CSS)
@@ -139,8 +176,6 @@ style.innerHTML = `
   20%, 60% { transform: translateX(-6px); }
   40%, 80% { transform: translateX(6px); }
 }
-.animate-shake {
-  animation: shake 0.4s;
-}
+.animate-shake { animation: shake 0.4s; }
 `;
 document.head.appendChild(style);
