@@ -1,4 +1,3 @@
-# app/config/firebase.py
 """
 Configuración y inicialización de Firebase para PlayTimeUY v3.0
 ---------------------------------------------------------------
@@ -33,7 +32,7 @@ logger = logging.getLogger("PlayTimeUY.firebase")
 # =========================================================
 # Resolver credenciales Firebase Admin
 # =========================================================
-DEFAULT_SERVICE_ACCOUNT = BASE_DIR / "secrets" / "playtimeuy-firebase-adminsdk-fbsvc-59c2e483cb.json"
+DEFAULT_SERVICE_ACCOUNT = BASE_DIR / "secrets" / "playtime2025-firebase-adminsdk.json"
 
 firebase_app: firebase_admin.App | None = None
 cred: credentials.Certificate | None = None
@@ -65,11 +64,11 @@ try:
                 options={
                     "databaseURL": os.getenv(
                         "FIREBASE_DATABASE_URL",
-                        "https://playtimeuy-default-rtdb.firebaseio.com",
+                        "https://playtime2025-default-rtdb.firebaseio.com",
                     ),
                     "storageBucket": os.getenv(
                         "FIREBASE_STORAGE_BUCKET",
-                        "playtimeuy.appspot.com",
+                        "playtime2025.firebasestorage.app",
                     ),
                 },
             )
@@ -115,10 +114,10 @@ except Exception:
 # Inicialización Pyrebase (Frontend)
 # =========================================================
 firebase_config = {
-    "apiKey": os.getenv("VITE_FIREBASE_API_KEY", ""),
-    "authDomain": os.getenv("VITE_FIREBASE_AUTH_DOMAIN", ""),
-    "databaseURL": os.getenv("VITE_FIREBASE_DATABASE_URL", ""),
-    "storageBucket": os.getenv("VITE_FIREBASE_STORAGE_BUCKET", "")
+    "apiKey": os.getenv("VITE_FIREBASE_API_KEY", "AIzaSyADuExp0K-vavTq5Yefk9Qo_yCdr4DC8aM"),
+    "authDomain": os.getenv("VITE_FIREBASE_AUTH_DOMAIN", "playtime2025.firebaseapp.com"),
+    "databaseURL": os.getenv("VITE_FIREBASE_DATABASE_URL", "https://playtime2025-default-rtdb.firebaseio.com"),
+    "storageBucket": os.getenv("VITE_FIREBASE_STORAGE_BUCKET", "playtime2025.firebasestorage.app")
 }
 
 try:

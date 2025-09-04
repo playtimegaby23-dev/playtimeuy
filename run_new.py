@@ -1,6 +1,5 @@
 # run_new.py - PlayTimeUY Ultra Profesional v3.2
 from __future__ import annotations
-
 import os
 import sys
 import signal
@@ -19,12 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 # Selección dinámica de archivo .env
 env = os.getenv("FLASK_ENV", "development").lower()
-if env == "production":
-    DOTENV_PATH = BASE_DIR / ".env.production"
-elif env == "development":
-    DOTENV_PATH = BASE_DIR / ".env.development"
-else:
-    DOTENV_PATH = BASE_DIR / ".env"
+DOTENV_PATH = BASE_DIR / f".env.{env}" if env in ("development", "production") else BASE_DIR / ".env"
 
 if DOTENV_PATH.exists():
     load_dotenv(DOTENV_PATH, override=True)

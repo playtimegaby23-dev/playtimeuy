@@ -7,7 +7,10 @@
 
 .nav-link::after {
   content: '';
-  @apply absolute left-1/2 -translate-x-1/2 bottom-[-6px] w-0 h-[2px] bg-gradient-to-r from-pink-500 to-purple-500 rounded-full transition-all duration-300;
+  @apply absolute left-1/2 -translate-x-1/2 bottom-[-6px]
+         w-0 h-[2px] bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500
+         rounded-full transition-all duration-500 ease-out 
+         shadow-[0_0_8px_rgba(236,72,153,0.6)];
 }
 
 .nav-link:hover::after,
@@ -15,23 +18,44 @@
   @apply w-4/5;
 }
 
-/* Estado activo más visible */
+/* Estado activo elegante */
 .nav-link.active {
-  @apply text-white font-semibold;
+  @apply text-white font-semibold drop-shadow-[0_0_8px_rgba(236,72,153,0.7)];
+  text-shadow: 0 0 12px rgba(236,72,153,0.7), 0 0 24px rgba(168,85,247,0.5);
 }
 
 /* =========================
    BOTONES
    ========================= */
 .btn-primary {
-  @apply bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:shadow-pink-500/40 hover:scale-105 transition-transform duration-300 text-white font-semibold tracking-wide;
+  @apply bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 
+         px-6 py-2.5 rounded-full text-white font-semibold tracking-wide
+         shadow-lg shadow-pink-500/30 
+         hover:shadow-xl hover:shadow-pink-500/50
+         transition-all duration-300 ease-out;
+  background-size: 200% 200%;
+  animation: gradient-flow 6s ease infinite;
+  transform-style: preserve-3d;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.05) rotateX(6deg);
 }
 
 .btn-outline {
-  @apply border border-pink-500 px-6 py-2.5 rounded-full text-pink-500 font-semibold tracking-wide hover:bg-pink-500 hover:text-white hover:scale-105 transition-transform duration-300;
+  @apply border border-pink-500 px-6 py-2.5 rounded-full 
+         text-pink-500 font-semibold tracking-wide 
+         transition-all duration-300 ease-out;
 }
 
-/* Pequeña animación al hacer click */
+.btn-outline:hover {
+  @apply text-white;
+  background: linear-gradient(90deg, #ec4899, #a855f7, #7e22ce);
+  box-shadow: 0 4px 15px rgba(236,72,153,0.4);
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* Animación al hacer click */
 .btn-primary:active,
 .btn-outline:active {
   @apply scale-95;
@@ -41,10 +65,45 @@
    LINKS MÓVILES
    ========================= */
 .mobile-link {
-  @apply block text-gray-300 hover:text-white py-2 px-4 rounded-md transition-colors duration-300;
+  @apply block text-gray-300 hover:text-white py-2 px-4 rounded-md
+         transition-colors duration-300 ease-out;
 }
 
-/* Activo en móvil */
 .mobile-link.active {
-  @apply bg-gradient-to-r from-pink-500/80 to-purple-500/80 text-white font-semibold;
+  @apply text-white font-semibold shadow-md;
+  background: linear-gradient(90deg, rgba(236,72,153,.9), rgba(168,85,247,.9), rgba(126,34,206,.9));
+  box-shadow: 0 0 12px rgba(236,72,153,0.4);
+}
+
+/* =========================
+   GLASSMORPHISM
+   ========================= */
+.glass-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(16px) saturate(180%);
+  @apply rounded-2xl p-6 shadow-xl transition-all duration-300;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(236,72,153,0.25);
+}
+
+/* =========================
+   ANIMACIONES EXTRA
+   ========================= */
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(236,72,153,0.5), 0 0 16px rgba(168,85,247,0.4); }
+  50% { box-shadow: 0 0 16px rgba(236,72,153,0.8), 0 0 32px rgba(168,85,247,0.7); }
+}
+
+.btn-glow {
+  animation: glow 2s infinite ease-in-out;
 }

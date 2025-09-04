@@ -4,23 +4,26 @@
 
   <div class="relative container mx-auto px-6 py-3 flex items-center justify-between">
     <!-- Logo -->
-    <a href="{{ url_for('main.index') }}" 
-       class="text-2xl font-extrabold tracking-tight text-white hover:text-pink-500 transition-all duration-500 flex items-center gap-2"
+    <a href="{{ url_for('main.index') }}"
+       class="text-2xl font-extrabold tracking-tight text-white hover:text-pink-500 transition-all duration-500 flex items-center gap-2 group"
        aria-label="Ir a inicio">
-      <span class="inline-block transform hover:rotate-12 hover:scale-125 transition-transform duration-500">🎯</span>
+      <span class="inline-block transform group-hover:rotate-12 group-hover:scale-125 transition-transform duration-500">🎯</span>
       PlayTime<span class="text-pink-500">UY</span>
     </a>
 
     {% set user = session.get('user') %}
     <!-- Menú Desktop -->
     <ul class="hidden md:flex space-x-6 font-medium text-gray-300 items-center relative">
+      <!-- Inicio -->
       <li>
-        <a href="{{ url_for('main.index') }}" 
+        <a href="{{ url_for('main.index') }}"
            class="nav-link relative px-3 py-1 hover:text-pink-500 transition-colors duration-300 {% if request.endpoint == 'main.index' %}text-pink-500{% endif %}">
           Inicio
         </a>
       </li>
+
       {% if user %}
+        <!-- Explorar -->
         <li>
           <a href="{{ url_for('main.dashboard') }}"
              class="nav-link relative px-3 py-1 hover:text-pink-500 transition-colors duration-300 {% if 'dashboard' in request.endpoint %}text-pink-500{% endif %}">
@@ -29,18 +32,19 @@
         </li>
 
         <!-- Perfil Dropdown -->
-        <li class="relative group">
-          <button class="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-gray-800/70 transition-all duration-300 focus:outline-none"
-                  aria-haspopup="true" aria-expanded="false">
-            <img src="{{ user.avatar or url_for('static', filename='img/avatar-placeholder.png') }}" 
+        <li class="relative group" id="dropdown-wrapper">
+          <button class="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-gray-800/70 transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-500"
+                  aria-haspopup="true" aria-expanded="false" id="dropdown-btn">
+            <img src="{{ user.avatar or url_for('static', filename='img/avatar-placeholder.png') }}"
                  alt="Avatar de {{ user.username }}" class="w-9 h-9 rounded-full border-2 border-pink-500 shadow-sm">
             <span class="text-white font-medium">{{ user.username }}</span>
-            <svg class="w-4 h-4 text-gray-300 group-hover:text-pink-500 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg id="dropdown-icon" class="w-4 h-4 text-gray-300 group-hover:text-pink-500 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
 
-          <div class="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-300 z-50">
+          <!-- Menú desplegable -->
+          <div id="dropdown-menu" class="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl opacity-0 scale-95 invisible transition-all duration-300 z-50">
             <div class="px-4 py-3 border-b border-gray-700 flex flex-col gap-1">
               <div class="flex items-center justify-between">
                 <span class="font-semibold text-white">{{ user.full_name }}</span>
@@ -50,138 +54,33 @@
 
             <!-- Links del dropdown -->
             <a href="{{ url_for('main.dashboard') }}" class="dropdown-item">Dashboard</a>
-            {% if 'main.profile' in current_app.view_functions %}
-            <a href="{{ url_for('main.profile') }}" class="dropdown-item">Perfil</a>
-            {% endif %}
-            {% if 'main.subscriptions' in current_app.view_functions %}
-            <a href="{{ url_for('main.subscriptions') }}" class="dropdown-item">Suscripciones</a>
-            {% endif %}
-            {% if 'main.tips' in current_app.view_functions %}
-            <a href="{{ url_for('main.tips') }}" class="dropdown-item">Tips</a>
-            {% endif %}
-            {% if 'main.settings' in current_app.view_functions %}
-            <a href="{{ url_for('main.settings') }}" class="dropdown-item">Configuración</a>
-            {% endif %}
+
+            {% for view, label in {
+              'main.profile': 'Perfil',
+              'main.subscriptions': 'Suscripciones',
+              'main.tips': 'Tips',
+              'main.settings': 'Configuración'
+            }.items() %}
+              {% if view in current_app.view_functions %}
+                <a href="{{ url_for(view) }}" class="dropdown-item">{{ label }}</a>
+              {% endif %}
+            {% endfor %}
+
             <div class="border-t border-gray-700"></div>
-            <a href="{{ url_for('main.api_logout') }}" class="dropdown-item text-red-400 hover:bg-gray-700 rounded-b-lg">Cerrar sesión</a>
+            <a href="{{ url_for('main.api_logout') }}" class="dropdown-item text-red-400 hover:bg-gray-700 rounded-b-lg">
+              Cerrar sesión
+            </a>
           </div>
         </li>
       {% else %}
+        <!-- Botón login -->
         <li>
-          <a href="{{ url_for('main.login') }}" 
-             class="btn-primary bg-gradient-to-r from-pink-500 to-purple-500 text-white px-5 py-2 rounded-lg shadow-lg hover:scale-105 transform transition-all duration-300">
-            Ingresar
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('main.register') }}" 
-             class="btn-outline border border-pink-500 text-pink-500 px-5 py-2 rounded-lg hover:bg-pink-500 hover:text-white transition-all duration-300">
-            Registrarse
+          <a href="{{ url_for('main.login') }}"
+             class="btn-primary bg-gradient-to-r from-pink-500 to-purple-500 text-white px-5 py-2 rounded-lg shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-pink-500/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-500">
+            Iniciar sesión
           </a>
         </li>
       {% endif %}
     </ul>
-
-    <!-- Botón menú móvil -->
-    <button id="btn-mobile-menu" 
-            class="md:hidden focus:outline-none p-2 rounded-lg hover:bg-gray-800 transition-all duration-300"
-            aria-label="Abrir menú" aria-expanded="false">
-      <svg id="menu-icon" class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 6h16M4 12h16M4 18h16"></path>
-      </svg>
-    </button>
   </div>
-
-  <!-- Menú móvil -->
-  <div id="mobile-menu" class="hidden md:hidden bg-gray-900/95 px-6 py-6 border-t border-gray-800 shadow-xl animate-slideDown">
-    <ul class="space-y-4 font-medium text-gray-300">
-      <li><a href="{{ url_for('main.index') }}" class="mobile-link block px-4 py-2 rounded-lg {% if request.endpoint == 'main.index' %}bg-pink-500 text-white{% endif %}">Inicio</a></li>
-      {% if user %}
-        <li><a href="{{ url_for('main.dashboard') }}" class="mobile-link">Explorar</a></li>
-        {% if 'main.profile' in current_app.view_functions %}
-        <li><a href="{{ url_for('main.profile') }}" class="mobile-link">Perfil</a></li>
-        {% endif %}
-        {% if 'main.subscriptions' in current_app.view_functions %}
-        <li><a href="{{ url_for('main.subscriptions') }}" class="mobile-link">Suscripciones</a></li>
-        {% endif %}
-        {% if 'main.tips' in current_app.view_functions %}
-        <li><a href="{{ url_for('main.tips') }}" class="mobile-link">Tips</a></li>
-        {% endif %}
-        {% if 'main.settings' in current_app.view_functions %}
-        <li><a href="{{ url_for('main.settings') }}" class="mobile-link">Configuración</a></li>
-        {% endif %}
-        <li><a href="{{ url_for('main.api_logout') }}" class="mobile-link text-red-400">Cerrar sesión</a></li>
-      {% else %}
-        <li><a href="{{ url_for('main.login') }}" class="btn-primary block text-center bg-gradient-to-r from-pink-500 to-purple-500 text-white px-5 py-2 rounded-lg shadow-lg hover:scale-105 transition-all duration-300">Ingresar</a></li>
-        <li><a href="{{ url_for('main.register') }}" class="btn-outline block text-center border border-pink-500 text-pink-500 px-5 py-2 rounded-lg hover:bg-pink-500 hover:text-white transition-all duration-300">Registrarse</a></li>
-      {% endif %}
-    </ul>
-  </div>
-
-  <!-- Overlay móvil -->
-  <div id="mobile-menu-overlay" class="hidden fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"></div>
 </nav>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("btn-mobile-menu");
-  const menu = document.getElementById("mobile-menu");
-  const overlay = document.getElementById("mobile-menu-overlay");
-
-  const toggleMenu = () => {
-    const isOpen = !menu.classList.contains("hidden");
-    menu.classList.toggle("hidden");
-    overlay.classList.toggle("hidden");
-    btn.setAttribute("aria-expanded", String(!isOpen));
-  };
-
-  btn.addEventListener("click", toggleMenu);
-  overlay.addEventListener("click", toggleMenu);
-});
-</script>
-
-<style>
-/* Gradiente animado */
-@keyframes gradient-bg { 0%,100% { background-position:0% 50% } 50% { background-position:100% 50% } }
-.animate-gradient-bg { background-size:200% 200%; animation:gradient-bg 12s ease-in-out infinite; }
-
-/* Menú móvil slide down */
-@keyframes slideDown { from { opacity:0; transform:translateY(-10px);} to { opacity:1; transform:translateY(0);} }
-.animate-slideDown { animation: slideDown 0.35s ease-in-out forwards; }
-
-/* Nav links hover */
-.nav-link::before {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: 0;
-  left: 0;
-  background-color: #ec4899;
-  visibility: hidden;
-  transition: all 0.3s ease-in-out;
-}
-.nav-link:hover::before { visibility: visible; width: 100%; }
-
-/* Dropdown hover */
-.dropdown-item {
-  display: block;
-  padding: 0.75rem 1rem;
-  color: #d1d5db;
-  transition: all 0.3s ease-in-out;
-}
-.dropdown-item:hover { background: rgba(236,72,153,0.15); color: #fff; }
-
-/* Mobile links hover */
-.mobile-link {
-  display: block;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease-in-out;
-}
-.mobile-link:hover { background: #ec4899; color: #fff; }
-
-/* Botones hover */
-.btn-primary:hover, .dropdown-item:hover { box-shadow:0 0 18px rgba(236,72,153,0.6); }
-</style>

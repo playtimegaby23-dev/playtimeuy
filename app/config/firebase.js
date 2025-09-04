@@ -1,6 +1,6 @@
 //--------------------------------------------------------
 // Inicialización de Firebase (Cliente / Frontend)
-// ✅ Configurado con los datos exactos de PlayTimeUY
+// ✅ Configurado con los datos exactos de PlayTimeUY 2025
 //--------------------------------------------------------
 
 import { initializeApp, getApps } from "firebase/app";
@@ -10,18 +10,18 @@ import { getDatabase } from "firebase/database";
 import { getStorage } from "firebase/storage";
 
 // =========================================================
-// Configuración Firebase de PlayTimeUY
-// (Ideal mover a .env en producción)
+// Configuración Firebase de PlayTimeUY 2025
+// (⚠️ Recomendado mover a variables de entorno en producción)
 // =========================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDbS7kMOMgx5lCL8qWJj9AHkXr-oQJgy20",
-  authDomain: "playtimeuy.firebaseapp.com",
-  databaseURL: "https://playtimeuy-default-rtdb.firebaseio.com",
-  projectId: "playtimeuy",
-  storageBucket: "playtimeuy.appspot.com",
-  messagingSenderId: "709385694606",
-  appId: "1:709385694606:web:7e6ff7ff52bcaba9cf48df",
-  measurementId: "G-XXXXXXXXXX", // opcional
+  apiKey: "AIzaSyADuExp0K-vavTq5Yefk9Qo_yCdr4DC8aM",
+  authDomain: "playtime2025.firebaseapp.com",
+  databaseURL: "https://playtime2025-default-rtdb.firebaseio.com",
+  projectId: "playtime2025",
+  storageBucket: "playtime2025.firebasestorage.app",
+  messagingSenderId: "8394953810",
+  appId: "1:8394953810:web:7ac9fdcad79b4ebbd33b8b",
+  measurementId: "G-XXXXXXXXXX", // opcional si activás Analytics
 };
 
 // =========================================================
@@ -54,7 +54,7 @@ export default firebaseApp;
 export { firebaseConfig };
 
 // =========================================================
-// Función de debug opcional (solo dev)
+// Función de debug opcional (solo en desarrollo)
 // =========================================================
 export function logFirebaseStatus() {
   if (import.meta.env?.MODE !== "development" && process.env.NODE_ENV !== "development") return;

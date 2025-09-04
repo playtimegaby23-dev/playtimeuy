@@ -1,218 +1,129 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth antialiased">
+<html lang="es" class="scroll-smooth antialiased [color-scheme:dark]">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}PlayTimeUY - Contenido Premium{% endblock %}</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}PlayTimeUY · Contenido Premium{% endblock %}</title>
 
-  <!-- SEO y Meta Tags -->
-  <meta name="description" content="PlayTimeUY: Plataforma premium para creadoras de contenido. Sin comisiones ocultas, diseño moderno y experiencia profesional.">
-  <meta name="author" content="PlayTimeUY">
+  <!-- META -->
+  <meta name="description" content="PlayTimeUY: Plataforma premium para creadoras de contenido. Sin comisiones, diseño moderno y experiencia profesional.">
   <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#ec4899">
-
-  <!-- Canonical -->
+  <meta name="theme-color" content="#0b0c10">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <link rel="canonical" href="{{ request.url if request else url_for('main.index', _external=True) }}">
 
-  <!-- Open Graph / Social -->
+  <!-- OG / Twitter -->
   <meta property="og:title" content="PlayTimeUY - Contenido Premium">
-  <meta property="og:description" content="Crea, comparte y gana con la plataforma más moderna y segura para creadoras de contenido.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="{{ request.url if request else url_for('main.index', _external=True) }}">
+  <meta property="og:description" content="Plataforma premium para creadoras sin comisiones.">
   <meta property="og:image" content="{{ url_for('static', filename='img/og-banner.jpg', _external=True) }}">
-  <meta property="og:site_name" content="PlayTimeUY">
-
-  <!-- Twitter Cards -->
+  <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PlayTimeUY - Contenido Premium">
-  <meta name="twitter:description" content="Crea, comparte y gana con la plataforma más moderna y segura para creadoras de contenido.">
+  <meta name="twitter:description" content="Plataforma premium para creadoras sin comisiones.">
   <meta name="twitter:image" content="{{ url_for('static', filename='img/og-banner.jpg', _external=True) }}">
-
-  <!-- PWA -->
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="PlayTimeUY">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <!-- Favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
-  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='favicon-192.png') }}">
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon-192.png') }}">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" media="all">
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com" defer></script>
+  <!-- Tailwind config + runtime -->
   <script>
     tailwind.config = {
       theme: {
-        container: { center: true, padding: '1rem' },
         extend: {
-          fontFamily: { sans: ['Poppins','ui-sans-serif','system-ui','sans-serif'] },
+          fontFamily: { sans: ['Inter','system-ui','sans-serif'] },
           colors: {
-            primary: '#ec4899',
-            secondary: '#111827',
-            dark: '#0b0c10',
-            accent: '#a855f7'
-          },
-          boxShadow: {
-            glow: '0 0 25px rgba(236,72,153,0.35)',
-            card: '0 10px 35px rgba(0,0,0,0.45)'
+            primary: { DEFAULT:'#ec4899' },
+            accent: '#a855f7',
+            base: '#0b0c10',
+            panel: '#0f1117'
           },
           animation: {
-            fadeIn: "fadeIn .6s ease-in-out",
-            slideUp: "slideUp .7s ease-in-out",
-            pulseGlow: "pulseGlow 2.5s ease-in-out infinite alternate"
+            fadeIn: "fadeIn .6s ease-out both",
+            float: "float 6s ease-in-out infinite"
           },
           keyframes: {
-            fadeIn: { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
-            slideUp: { "0%": { transform: "translateY(20px)", opacity: 0 }, "100%": { transform: "translateY(0)", opacity: 1 } },
-            pulseGlow: { "0%": { boxShadow: "0 0 0 rgba(236,72,153,.2)" }, "100%": { boxShadow: "0 0 25px rgba(236,72,153,.35)" } }
+            fadeIn: { "0%":{opacity:0}, "100%":{opacity:1} },
+            float: { "0%,100%":{transform:"translateY(0)"}, "50%":{transform:"translateY(-8px)"} }
           }
         }
       }
     }
   </script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Bootstrap 5 CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-
-  <!-- Estilos base -->
+  <!-- Critical Styles -->
   <style>
     body {
-      background:
-        radial-gradient(60rem 60rem at 120% -10%, rgba(168,85,247,.16), transparent 70%),
-        radial-gradient(60rem 60rem at -20% 120%, rgba(236,72,153,.14), transparent 70%),
-        #0b0c10;
+      background: radial-gradient(80rem 60rem at 120% -20%, rgba(168,85,247,.12), transparent),
+                  radial-gradient(80rem 60rem at -20% 120%, rgba(236,72,153,.1), transparent),
+                  #0b0c10;
+      font-family: 'Inter', sans-serif;
       color: #fff;
+      -webkit-font-smoothing: antialiased;
     }
-    .pt-loader {
-      position: fixed; inset:0; display:grid; place-items:center;
-      background:rgba(10,10,12,.96); backdrop-filter:blur(6px); z-index:1000;
-      transition: opacity 0.35s ease;
-    }
-    .pt-ring {
-      width:96px;height:96px;border-radius:9999px;
-      background:conic-gradient(from 0deg,#ec4899,#d946ef,#9333ea,#ec4899);
-      mask:radial-gradient(farthest-side,#0000 calc(100%-12px),#000 0);
-      -webkit-mask:radial-gradient(farthest-side,#0000 calc(100%-12px),#000 0);
-      animation:spin 1.2s linear infinite;
-      box-shadow:0 0 45px rgba(236,72,153,.35), inset 0 0 25px rgba(0,0,0,.4);
-    }
-    .pt-wordmark {
-      position:absolute;text-align:center;line-height:1;font-weight:800;
-      color:#fff;filter:drop-shadow(0 6px 18px rgba(236,72,153,.45));
-      animation:pulseGlow 2.2s ease-in-out infinite alternate;
-    }
-    .pt-wordmark span { display:block; font-weight:600; opacity:.9; font-size:.85rem; margin-top:.25rem; }
-    @keyframes spin { to { transform: rotate(360deg) } }
-    :focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
+    .glass { backdrop-filter: blur(12px); background: rgba(255,255,255,.03); }
+    .btn { transition: all .25s cubic-bezier(.4,0,.2,1); }
+    .btn:hover { transform: translateY(-1px) scale(1.02); }
+    ::selection { background: rgba(236,72,153,.25); color:#fff; }
+    .fade-up { opacity: 0; transform: translateY(20px); }
   </style>
+
+  <!-- GSAP + ScrollReveal -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://unpkg.com/scrollreveal" defer></script>
+
+  <!-- Security: CSP -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; 
+                 script-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com; 
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+                 font-src https://fonts.gstatic.com; 
+                 img-src 'self' data: https:;">
 </head>
 
-<body class="text-white font-sans overflow-x-hidden selection:bg-primary/20 selection:text-white">
+<body class="font-sans text-white overflow-x-hidden">
+  
   <!-- Loader -->
-  <div id="loader" class="pt-loader" role="status" aria-live="polite" aria-label="Cargando PlayTimeUY">
-    <div class="relative">
-      <div class="pt-ring"></div>
-      <div class="pt-wordmark -translate-y-1/2 left-1/2 top-1/2 absolute" style="transform:translate(-50%,-50%);">
-        <div style="font-size:1.35rem">PlayTime<span class="text-primary">UY</span></div>
-        <span>cargando…</span>
-      </div>
+  <div id="loader" class="fixed inset-0 grid place-items-center z-50 bg-[#0b0c10] transition-opacity">
+    <div class="relative animate-fadeIn" role="status" aria-label="Cargando PlayTimeUY">
+      <div class="h-20 w-20 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+      <div class="absolute inset-0 grid place-items-center font-bold text-primary">PlayTimeUY</div>
     </div>
   </div>
 
-  <!-- No JS Warning -->
+  <!-- NoScript -->
   <noscript>
-    <div class="fixed inset-x-0 top-0 z-[1001] bg-pink-600 text-white text-center py-2">
-      Habilitá JavaScript para la mejor experiencia en PlayTimeUY.
+    <div class="fixed inset-x-0 top-0 z-50 bg-primary text-white text-center py-2">
+      Activá JavaScript para la mejor experiencia en PlayTimeUY.
     </div>
   </noscript>
 
   <!-- Navbar -->
   {% include 'navbar.html' %}
 
-  <!-- Contenido dinámico -->
-  <main class="min-h-screen">
+  <!-- Main -->
+  <main id="page" class="min-h-screen fade-up">
     {% block banner %}{% endblock %}
     {% block content %}{% endblock %}
   </main>
 
   <!-- Footer -->
-  <footer class="mt-12 py-10 border-t border-white/10 bg-gray-900 text-gray-300">
-    <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div>
-        <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 mb-4">
-          <img src="{{ url_for('static', filename='favicon.png') }}" alt="PlayTimeUY Logo" class="w-12 h-12 rounded-md">
-          <div>
-            <div class="text-white font-bold text-lg">PlayTime<span class="text-primary">UY</span></div>
-            <div class="text-sm text-gray-400">Contenido premium para creadoras</div>
-          </div>
-        </a>
-        <p class="text-sm text-gray-400">© {{ datetime.utcnow().year }} PlayTimeUY. Todos los derechos reservados.</p>
-      </div>
-      <nav aria-label="Soporte">
-        <h4 class="text-white font-semibold mb-2">Soporte</h4>
-        <ul class="space-y-1 text-sm">
-          <li><a href="#" class="hover:text-primary transition-colors">Ayuda</a></li>
-          <li><a href="#" class="hover:text-primary transition-colors">Términos</a></li>
-          <li><a href="#" class="hover:text-primary transition-colors">Privacidad</a></li>
-        </ul>
-      </nav>
-      <nav aria-label="Comunidad">
-        <h4 class="text-white font-semibold mb-2">Comunidad</h4>
-        <ul class="space-y-1 text-sm">
-          <li><a href="#" class="hover:text-primary transition-colors">Blog</a></li>
-          <li><a href="#" class="hover:text-primary transition-colors">Afiliados</a></li>
-          <li><a href="#" class="hover:text-primary transition-colors">Contacto</a></li>
-        </ul>
-      </nav>
-    </div>
-  </footer>
+  {% include 'footer.html' %}
 
-  <!-- Scripts optimizados -->
-  {% set js_files = [
+  <!-- Scripts -->
+  {% for js in [
     'js/firebase.js','js/base.js','js/ui.js','js/navbar.js',
     'js/auth.js','js/registro.js','js/google-auth.js','js/profile_creator.js',
     'js/salesService.js','js/validators.js'
   ] %}
-  {% for js in js_files %}
     <script type="module" src="{{ url_for('static', filename=js) }}" defer></script>
   {% endfor %}
-
-  <!-- Loader fade out -->
-  <script>
-    (() => {
-      const loader = document.getElementById('loader');
-      const MIN_VISIBLE = 400;
-      const start = Date.now();
-      const hideLoader = () => {
-        const elapsed = Date.now() - start;
-        setTimeout(() => {
-          if (!loader) return;
-          loader.style.opacity = '0';
-          loader.addEventListener('transitionend', () => loader.remove(), { once:true });
-        }, Math.max(0, MIN_VISIBLE - elapsed));
-      };
-      if (document.readyState === 'complete') hideLoader();
-      else window.addEventListener('load', hideLoader);
-    })();
-  </script>
-
-  <!-- PWA Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .catch(err => console.warn("SW fallo:", err));
-      });
-    }
-  </script>
 </body>
 </html>

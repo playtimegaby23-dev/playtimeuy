@@ -18,15 +18,16 @@ import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import { getStorage } from "firebase/storage";
 
-// Configuración de Firebase
+// Configuración de Firebase (PlayTimeUY 2025)
 const firebaseConfig = {
-  apiKey: "AIzaSyDbS7kMOMgx5lCL8qWJj9AHkXr-oQJgy20",
-  authDomain: "playtimeuy.firebaseapp.com",
-  databaseURL: "https://playtimeuy-default-rtdb.firebaseio.com",
-  projectId: "playtimeuy",
-  storageBucket: "playtimeuy.firebasestorage.app",
-  messagingSenderId: "709385694606",
-  appId: "1:709385694606:web:7e6ff7ff52bcaba9cf48df",
+  apiKey: "AIzaSyADuExp0K-vavTq5Yefk9Qo_yCdr4DC8aM",
+  authDomain: "playtime2025.firebaseapp.com",
+  databaseURL: "https://playtime2025-default-rtdb.firebaseio.com",
+  projectId: "playtime2025",
+  storageBucket: "playtime2025.firebasestorage.app",
+  messagingSenderId: "8394953810",
+  appId: "1:8394953810:web:7ac9fdcad79b4ebbd33b8b",
+  measurementId: "G-XXXXXXXXXX", // opcional si usás Analytics
 };
 
 // Inicializar Firebase una sola vez
@@ -41,6 +42,7 @@ export const firebaseStorage = getStorage(app);
 // =========================================================
 // 2. Mercado Pago (Frontend)
 // =========================================================
+// ⚠️ Recomendado: mover accessToken/publicKey a variables de entorno
 export const MP_CONFIG = {
   accessToken: "APP_USR-d28c8e91-bfe9-4750-9e83-62968c5ce0eb",
   publicKey: "APP_USR-8983986661644091-081911-db4d3357b3a9cc4c1fc9d6c0f9283991-1631824500",
@@ -59,12 +61,22 @@ export const MP_CONFIG = {
 // 3. Funciones auxiliares
 // =========================================================
 export function logConfig() {
+  if (import.meta.env?.MODE !== "development" && process.env.NODE_ENV !== "development") return;
+
   console.log("📊 [Config] Firebase:", {
     projectId: firebaseConfig.projectId,
     databaseURL: firebaseConfig.databaseURL,
     storageBucket: firebaseConfig.storageBucket,
+    authDomain: firebaseConfig.authDomain,
+    appId: firebaseConfig.appId,
   });
-  console.log("📊 [Config] Mercado Pago:", MP_CONFIG);
+
+  console.log("📊 [Config] Mercado Pago:", {
+    currency: MP_CONFIG.currency,
+    basePrice: MP_CONFIG.basePrice,
+    urls: MP_CONFIG.urls,
+    integratorId: MP_CONFIG.integratorId,
+  });
 }
 
 // =========================================================

@@ -2,146 +2,269 @@
 {% block title %}Inicio - PlayTimeUY{% endblock %}
 
 {% block banner %}
-<!-- ===================== HERO / Banner ===================== -->
-<section 
-  id="hero"
-  class="relative flex flex-col items-center justify-center min-h-screen text-center text-white overflow-hidden"
-  role="banner" aria-label="Video de bienvenida de PlayTimeUY">
+<!-- ===================== HERO ===================== -->
+<section id="hero" class="relative min-h-[88vh] md:min-h-screen bg-black text-white overflow-hidden" role="banner" aria-label="Bienvenida a PlayTimeUY">
 
-  <!-- 🎥 Video de fondo -->
-  <video 
-    class="absolute inset-0 w-full h-full object-cover z-0 animate-slow-zoom"
-    autoplay muted loop playsinline preload="auto"
-    poster="{{ url_for('static', filename='video/banner-poster.jpg') }}"
-    loading="lazy"
-    aria-hidden="true">
+  <!-- Video de fondo -->
+  <video class="absolute inset-0 w-full h-full object-cover z-0 hero-zoom"
+         autoplay muted loop playsinline preload="metadata"
+         poster="{{ url_for('static', filename='video/banner-poster.jpg') }}"
+         aria-hidden="true">
     <source src="{{ url_for('static', filename='video/banner.mp4') }}" type="video/mp4">
-    Tu navegador no soporta video HTML5.
   </video>
 
-  <!-- 🌈 Capa de gradiente -->
-  <div class="absolute inset-0 bg-gradient-to-b from-black/90 via-pink-900/40 to-black/90 z-10"></div>
+  <!-- Capa de máscara -->
+  <div class="absolute inset-0 z-[1] backdrop-blur-[2px] bg-[radial-gradient(ellipse_at_center,_rgba(0,0,0,0.15),_rgba(0,0,0,0.65)_55%,_rgba(0,0,0,0.9))]"></div>
 
-  <!-- 📢 Contenido principal -->
-  <div class="relative z-20 px-6 max-w-5xl w-full text-center">
-    <h2 class="text-pink-300 font-medium text-lg sm:text-xl tracking-wide drop-shadow-lg animate-fade-in delay-200">
-      ✨ Descubrí una nueva forma de crear y ganar sin límites
-    </h2>
+  <!-- Barras neón decorativas -->
+  <div class="absolute -top-20 -left-32 w-[520px] h-[520px] rounded-full blur-3xl opacity-30 z-[1] bg-gradient-to-br from-fuchsia-500 via-pink-500 to-purple-600"></div>
+  <div class="absolute -bottom-24 -right-24 w-[520px] h-[520px] rounded-full blur-3xl opacity-25 z-[1] bg-gradient-to-br from-purple-600 via-indigo-500 to-sky-500"></div>
 
-    <h1 class="mt-4 font-extrabold leading-tight text-[clamp(2.2rem,6vw,4.5rem)] drop-shadow-2xl animate-fade-up delay-400">
-      Bienvenid@ a
-      <span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-300 via-fuchsia-400 to-purple-500 animate-gradient-x">
-        PlayTimeUY
-      </span>
-    </h1>
+  <!-- Contenido principal -->
+  <div class="relative z-[2] container mx-auto px-6 py-24 md:py-32">
+    <div class="grid md:grid-cols-2 gap-10 items-center">
 
-    <p class="mt-6 text-gray-200 font-light text-lg sm:text-xl max-w-2xl mx-auto animate-fade-up delay-600">
-      La plataforma donde las <span class="font-semibold text-white">creadoras uruguayas</span>
-      se quedan con el <span class="font-bold text-pink-300">100%</span> de sus ganancias.
-    </p>
+      <!-- Texto principal -->
+      <div class="text-center md:text-left space-y-6">
+        <p class="text-sm tracking-widest text-pink-300/90 font-semibold uppercase reveal">
+          Creadoras primero
+        </p>
 
-    <!-- 🔘 Botones -->
-    <div class="mt-8 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-      <a href="{{ url_for('main.login') }}" 
-         class="px-8 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 shadow-xl hover:scale-105 transition-transform duration-500 focus:ring-4 focus:ring-pink-400/60 font-bold">
-        🚀 Ingresar
-      </a>
-      <a href="{{ url_for('main.register') }}" 
-         class="px-8 py-3 rounded-2xl border-2 border-pink-500 text-pink-300 hover:bg-pink-500 hover:text-white shadow-lg transition-all duration-500 focus:ring-4 focus:ring-pink-400/60 font-bold">
-        💖 Registrarse
-      </a>
+        <h1 class="font-extrabold leading-tight text-[clamp(2.2rem,6vw,4.5rem)] reveal">
+          La plataforma donde las creadoras 
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-500 moving-gradient">
+            ganan TODO
+          </span>
+        </h1>
+
+        <p class="text-gray-200/90 text-lg md:text-xl max-w-xl md:max-w-none mx-auto md:mx-0 reveal delay-100">
+          Creá, compartí y monetizá con <span class="font-bold text-pink-300">0% de comisiones</span>.
+          Libertad creativa total, pagos seguros y herramientas pro.
+        </p>
+
+        <!-- Botones CTA -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start reveal delay-150">
+          <a href="{{ url_for('main.register') }}" class="px-7 py-3 rounded-2xl font-semibold shadow-xl transition-all duration-300 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-pink-500/40 hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-pink-400/60">
+            Crear cuenta
+          </a>
+          <a href="{{ url_for('main.login') }}" class="px-7 py-3 rounded-2xl font-semibold border-2 border-pink-400/70 text-pink-200 hover:bg-pink-500 hover:text-white hover:border-transparent transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-400/40">
+            Ingresar
+          </a>
+        </div>
+
+        <!-- Badges -->
+        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-300/90 reveal delay-200">
+          <span class="px-3 py-1 rounded-xl bg-white/10 backdrop-blur">Pagos seguros</span>
+          <span class="px-3 py-1 rounded-xl bg-white/10 backdrop-blur">Control total</span>
+          <span class="px-3 py-1 rounded-xl bg-white/10 backdrop-blur">Soporte 24/7</span>
+        </div>
+      </div>
+
+      <!-- Panel visual -->
+      <div class="reveal delay-100">
+        <div class="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-5 md:p-6">
+          <div class="aspect-[4/3] w-full overflow-hidden rounded-2xl relative">
+            <img loading="lazy" src="{{ url_for('static', filename='img/hero-preview.jpg') }}" alt="Creadora usando PlayTimeUY" class="w-full h-full object-cover scale-105 hover:scale-100 transition-transform duration-700">
+            <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-black/0 to-black/0"></div>
+          </div>
+
+          <!-- Stats -->
+          <div class="grid grid-cols-3 gap-4 mt-6">
+            <div class="stat-card">
+              <div class="text-3xl font-extrabold counter" data-target="0">0%</div>
+              <div class="text-xs uppercase tracking-wider text-gray-400">Comisiones</div>
+            </div>
+            <div class="stat-card">
+              <div class="text-3xl font-extrabold counter" data-target="99">0%</div>
+              <div class="text-xs uppercase tracking-wider text-gray-400">Satisfacción</div>
+            </div>
+            <div class="stat-card">
+              <div class="text-3xl font-extrabold counter" data-target="24">0/7</div>
+              <div class="text-xs uppercase tracking-wider text-gray-400">Soporte</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
-  </div>
 
-  <!-- ⬇ Indicador scroll -->
-  <div class="absolute bottom-6 flex flex-col items-center z-20 animate-bounce-slow delay-800">
-    <span class="text-sm text-gray-300 mb-2">Desliza hacia abajo</span>
-    <div class="w-6 h-10 border-2 border-pink-400 rounded-full flex justify-center items-start p-1">
-      <div class="w-1 h-3 bg-pink-300 rounded-full animate-scroll-indicator"></div>
+    <!-- Scroll indicator -->
+    <div class="absolute left-1/2 -translate-x-1/2 bottom-6 hidden md:flex items-center gap-3 opacity-80">
+      <span class="text-xs text-gray-300">Deslizá</span>
+      <div class="w-6 h-10 border-2 border-pink-400 rounded-full flex justify-center items-start p-1">
+        <div class="w-1 h-3 bg-pink-300 rounded-full scroll-indicator"></div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ===================== Beneficios ===================== -->
-<section class="py-20 bg-gray-950 text-white" aria-labelledby="beneficios-title">
-  <div class="container mx-auto px-6 text-center">
-    <h2 id="beneficios-title" 
-        class="text-4xl md:text-5xl font-extrabold mb-12 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 animate-gradient-x">
+<!-- ===================== BENEFICIOS ===================== -->
+<section id="beneficios" class="py-20 bg-gray-950 text-white" aria-labelledby="beneficios-title">
+  <div class="container mx-auto px-6">
+    <h2 id="beneficios-title" class="text-center text-4xl md:text-5xl font-extrabold mb-12 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 moving-gradient">
       ¿Por qué elegir PlayTimeUY?
     </h2>
-    <div class="grid md:grid-cols-3 gap-10">
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {% set beneficios = [
-        {"icon":"🚀","titulo":"Rápido y Seguro","desc":"Navegación veloz y datos protegidos con seguridad de nivel profesional."},
-        {"icon":"💎","titulo":"Contenido Exclusivo","desc":"Accedé a material único que no encontrarás en ningún otro lugar."},
-        {"icon":"🎯","titulo":"Fácil de Usar","desc":"Una interfaz intuitiva y clara, diseñada para todas las creadoras."}
+        {"icon": "M3 12l7.5 7.5L21 9", "titulo": "Pagos rápidos y seguros", "desc": "Procesamiento cifrado a nivel bancario con liquidaciones transparentes."},
+        {"icon": "M4 6h16v12H4z", "titulo": "Control total de tu contenido", "desc": "Monetización directa, sin intermediarios ni sorpresas."},
+        {"icon": "M12 3v18M3 12h18", "titulo": "Herramientas pro", "desc": "Analíticas, campañas, links inteligentes y más."}
       ] %}
       {% for b in beneficios %}
-      <article class="bg-gray-900/60 rounded-3xl p-8 shadow-2xl hover:scale-105 transition-transform duration-500 hover:shadow-pink-500/50">
-        <div class="text-6xl mb-4" aria-hidden="true">{{ b.icon }}</div>
-        <h3 class="text-2xl font-bold mb-2">{{ b.titulo }}</h3>
+      <article class="group rounded-3xl p-6 bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg hover:shadow-pink-500/30 transition-all duration-300 reveal">
+        <div class="w-12 h-12 rounded-2xl grid place-items-center mb-4 bg-gradient-to-br from-pink-500 to-purple-600">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" class="w-6 h-6">
+            <path d="{{ b.icon }}" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2">{{ b.titulo }}</h3>
         <p class="text-gray-300">{{ b.desc }}</p>
+        <div class="mt-4 h-[2px] w-0 group-hover:w-full transition-all bg-gradient-to-r from-pink-500 to-purple-500"></div>
       </article>
       {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ===================== Testimonios ===================== -->
-<section class="py-20 bg-gradient-to-r from-purple-900 via-pink-900 to-purple-800 text-white" aria-labelledby="testimonios-title">
-  <div class="container mx-auto px-6 text-center">
-    <h2 id="testimonios-title" 
-        class="text-4xl md:text-5xl font-extrabold mb-12 animate-fade-down">
-      Lo que dicen nuestras creadoras
-    </h2>
-    <div class="grid md:grid-cols-3 gap-10">
-      {% set testimonios = [
-        {"texto":"PlayTimeUY me permitió crecer y obtener ingresos sin perder mi independencia.","autor":"- Carla G."},
-        {"texto":"El sistema es muy fácil de usar y la plataforma es segura al 100%.","autor":"- Ana R."},
-        {"texto":"Recomiendo PlayTimeUY a todas las creadoras que quieran crecer profesionalmente.","autor":"- Laura M."}
-      ] %}
-      {% for t in testimonios %}
-      <blockquote class="bg-gray-900/70 rounded-3xl p-8 shadow-lg backdrop-blur-md hover:scale-105 transition-transform duration-500">
-        <p class="text-gray-200 italic mb-4">“{{ t.texto }}”</p>
-        <footer class="font-bold text-pink-400">{{ t.autor }}</footer>
-      </blockquote>
+<!-- ===================== MOSAICO ===================== -->
+<section class="py-16 bg-black text-white">
+  <div class="container mx-auto px-6">
+    <div class="grid md:grid-cols-3 gap-4 reveal">
+      {% for i in range(1,7) %}
+      <div class="relative overflow-hidden rounded-2xl group">
+        <img loading="lazy" alt="Creadora {{ i }}" src="{{ url_for('static', filename='img/creadoras/creadora' ~ i ~ '.jpg') }}" class="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-700">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+      </div>
       {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ===================== Animaciones personalizadas ===================== -->
+<!-- ===================== TESTIMONIOS ===================== -->
+<section id="testimonios" class="py-20 bg-gradient-to-r from-purple-900 via-pink-900 to-purple-800 text-white" aria-labelledby="testimonios-title">
+  <div class="container mx-auto px-6">
+    <h2 id="testimonios-title" class="text-center text-4xl md:text-5xl font-extrabold mb-12 reveal">
+      Lo que dicen nuestras creadoras
+    </h2>
+
+    <div class="overflow-hidden">
+      <div class="flex gap-6 animate-marquee will-change-transform">
+        {% set testimonios = [
+          {"texto":"PlayTimeUY me permitió crecer sin perder independencia.","autor":"Carla G."},
+          {"texto":"La plataforma es simple y muy segura.","autor":"Ana R."},
+          {"texto":"Herramientas pro y soporte real.","autor":"Laura M."},
+          {"texto":"Mis fans están encantados con la experiencia.","autor":"Maru T."}
+        ] %}
+        {% for t in testimonios|concat(testimonios) %}
+        <blockquote class="min-w-[300px] sm:min-w-[420px] bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-lg">
+          <p class="text-gray-100 italic">“{{ t.texto }}”</p>
+          <footer class="mt-4 font-semibold text-pink-200">— {{ t.autor }}</footer>
+        </blockquote>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section id="faq" class="py-20 bg-gray-950 text-white">
+  <div class="container mx-auto px-6 max-w-4xl">
+    <h2 class="text-center text-3xl md:text-4xl font-extrabold mb-10 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500 moving-gradient">
+      Preguntas frecuentes
+    </h2>
+
+    <div class="space-y-4">
+      {% set faqs = [
+        {"q":"¿Cómo retiro mis ganancias?","a":"Desde tu panel → Pagos. Elegí método y monto. Procesamiento seguro."},
+        {"q":"¿Puedo importar a mis fans?","a":"Sí, podés migrar tu audiencia mediante enlaces y campañas de bienvenida."},
+        {"q":"¿Toman comisión?","a":"No. 0% de comisión por parte de PlayTimeUY."}
+      ] %}
+      {% for f in faqs %}
+      <details class="group rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-5">
+        <summary class="cursor-pointer flex items-center justify-between list-none">
+          <span class="font-semibold">{{ f.q }}</span>
+          <span class="transition-transform group-open:rotate-45 text-pink-300 text-2xl leading-none">+</span>
+        </summary>
+        <p class="mt-3 text-gray-300">{{ f.a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CTA ===================== -->
+<section class="py-20 bg-black text-white text-center relative overflow-hidden">
+  <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(ellipse_at_center,_rgba(236,72,153,0.4),_transparent_60%)]"></div>
+  <div class="container mx-auto px-6 relative">
+    <h2 class="text-3xl md:text-4xl font-extrabold mb-4">¿List@ para empezar?</h2>
+    <p class="text-gray-300 max-w-2xl mx-auto mb-8">
+      Sumate a la comunidad de creadoras que ya están revolucionando el contenido digital.
+    </p>
+    <a href="{{ url_for('main.register') }}" class="inline-block px-10 py-4 rounded-2xl font-bold shadow-2xl transition-transform duration-300 bg-gradient-to-r from-pink-500 to-purple-600 hover:scale-[1.04] focus:outline-none focus:ring-4 focus:ring-pink-400/60">
+      Crear mi cuenta
+    </a>
+  </div>
+</section>
+
+<!-- ===================== ESTILOS & SCRIPTS ===================== -->
 <style>
-  /* 🎨 Gradiente animado */
   @keyframes gradient-x { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-  .animate-gradient-x { background-size: 200% 200%; animation: gradient-x 6s ease infinite; }
+  .moving-gradient { background-size: 200% 200%; animation: gradient-x 7s ease-in-out infinite; }
 
-  /* 🎥 Zoom suave en video */
-  @keyframes slow-zoom { 0%,100% { transform: scale(1.05); } 50% { transform: scale(1.08); } }
-  .animate-slow-zoom { animation: slow-zoom 20s ease-in-out infinite; }
+  @keyframes slow-zoom { 0%,100% { transform: scale(1.04); } 50% { transform: scale(1.08); } }
+  .hero-zoom { animation: slow-zoom 22s ease-in-out infinite; }
 
-  /* 🖱 Indicador scroll */
   @keyframes scroll-indicator { 0%,100% { transform: translateY(0); opacity:.5;} 50% { transform: translateY(12px); opacity:1; } }
-  .animate-scroll-indicator { animation: scroll-indicator 2s infinite; }
+  .scroll-indicator { animation: scroll-indicator 2s infinite; }
 
-  /* ⬆ / ⬇ Animaciones de texto */
-  @keyframes fadeIn { to { opacity:1; } }
-  @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
-  @keyframes fadeDown { to { opacity:1; transform:translateY(0); } }
+  @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .animate-marquee { width: 200%; animation: marquee 25s linear infinite; }
 
-  .animate-fade-in { opacity:0; animation:fadeIn 1s forwards; }
-  .animate-fade-up { opacity:0; transform:translateY(20px); animation:fadeUp 1s forwards; }
-  .animate-fade-down { opacity:0; transform:translateY(-20px); animation:fadeDown 1s forwards; }
+  .stat-card { @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-center; }
 
-  /* ♿ Respeto a usuarios con reducción de movimiento */
+  .reveal { opacity: 0; transform: translateY(12px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
   @media (prefers-reduced-motion: reduce) {
-    .animate-gradient-x, .animate-slow-zoom, .animate-scroll-indicator, 
-    .animate-fade-in, .animate-fade-up, .animate-fade-down, .animate-bounce-slow {
-      animation: none !important;
-    }
+    .moving-gradient, .hero-zoom, .scroll-indicator, .animate-marquee { animation: none !important; }
   }
-
-  /* Rebote lento */
-  @keyframes bounce-slow { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-  .animate-bounce-slow { animation: bounce-slow 2s infinite; }
 </style>
+
+<script>
+  // Scroll reveal
+  document.addEventListener('DOMContentLoaded', ()=> {
+    const els = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15 });
+    els.forEach(el=>io.observe(el));
+
+    // Contadores
+    const counters = document.querySelectorAll('.counter');
+    const animateCounter = (el, target, suffix='')=>{
+      const duration = 1200, startTime = performance.now();
+      const step = (time)=>{
+        const progress = Math.min((time - startTime)/duration,1);
+        el.textContent = `${Math.floor(progress*target)}${suffix}`;
+        if(progress<1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+
+    const ioCounter = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          const target = parseInt(e.target.dataset.target || '0',10);
+          const suffix = /\/7$/.test(e.target.textContent.trim()) ? '/7' : (/%$/.test(e.target.textContent.trim()) ? '%' : '');
+          animateCounter(e.target,target,suffix);
+          ioCounter.unobserve(e.target);
+        }
+      });
+    },{ threshold: 0.6 });
+    counters.forEach(c=>ioCounter.observe(c));
+  });
+</script>
 {% endblock %}
